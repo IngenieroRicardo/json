@@ -1,2 +1,2 @@
 # JSON
- Libreria C para servicio Leer JSON 
+ Libreria C para leer JSON 
