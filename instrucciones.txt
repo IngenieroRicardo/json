@@ -1,0 +1,5 @@
+go build -o libjsonparser.so -buildmode=c-shared jsonparser.go
+
+gcc -o server main.c ./libjsonparser.so
+
+./server
