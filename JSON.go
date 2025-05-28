@@ -21,8 +21,8 @@ import "C"
 import (
 	"encoding/json"
 	"unsafe"
-	"fmt"
 	"strconv"
+	"fmt"
 	"strings"
 )
 
@@ -86,70 +86,11 @@ func GetJSONValue(jsonStr *C.char, key *C.char) C.JsonResult {
 	return result
 }
 
-//export GetJSONValueByPath
-func GetJSONValueByPath(jsonStr *C.char, path *C.char) C.JsonResult {
-	goJsonStr := C.GoString(jsonStr)
-	goPath := C.GoString(path)
-	var result C.JsonResult
-
-	var data interface{}
-	err := json.Unmarshal([]byte(goJsonStr), &data)
-	if err != nil {
-		result.is_valid = 0
-		result.error = C.CString(err.Error())
-		return result
-	}
-
-	current := data
-	pathParts := strings.Split(goPath, ".")
-	for _, part := range pathParts {
-		if part == "" {
-			continue
-		}
-
-		switch v := current.(type) {
-		case map[string]interface{}:
-			val, exists := v[part]
-			if !exists {
-				result.is_valid = 0
-				result.error = C.CString(fmt.Sprintf("path '%s' not found", part))
-				return result
-			}
-			current = val
-		case []interface{}:
-			index, err := strconv.Atoi(part)
-			if err != nil || index < 0 || index >= len(v) {
-				result.is_valid = 0
-				result.error = C.CString(fmt.Sprintf("invalid array index '%s'", part))
-				return result
-			}
-			current = v[index]
-		default:
-			result.is_valid = 0
-			result.error = C.CString(fmt.Sprintf("cannot traverse path '%s'", part))
-			return result
-		}
-	}
-
-	jsonBytes, err := json.Marshal(current)
-	if err != nil {
-		result.is_valid = 0
-		result.error = C.CString(err.Error())
-		return result
-	}
-
-	result.is_valid = 1
-	result.value = C.CString(string(jsonBytes))
-	result.error = nil
-	return result
-}
-
 //export GetArrayLength
 func GetArrayLength(jsonStr *C.char) C.JsonResult {
 	goStr := C.GoString(jsonStr)
 	var result C.JsonResult
 
-	// Verificar si es un array
 	if len(goStr) == 0 || goStr[0] != '[' {
 		result.is_valid = 0
 		result.error = C.CString("not a JSON array")
@@ -164,7 +105,6 @@ func GetArrayLength(jsonStr *C.char) C.JsonResult {
 		return result
 	}
 
-	// Convertir el length a string
 	lengthStr := strconv.Itoa(len(arr))
 	
 	result.is_valid = 1
@@ -214,5 +154,112 @@ func FreeJsonResult(result *C.JsonResult) {
 		C.free(unsafe.Pointer(result.error))
 	}
 }
+
+//export GetJSONKeys
+func GetJSONKeys(jsonStr *C.char) C.JsonArrayResult {
+	goJsonStr := C.GoString(jsonStr)
+	var result C.JsonArrayResult
+
+	var data map[string]interface{}
+	err := json.Unmarshal([]byte(goJsonStr), &data)
+	if err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	keys := make([]string, 0, len(data))
+	for key := range data {
+		keys = append(keys, key)
+	}
+
+	// Allocate C memory for the array
+	cArray := C.malloc(C.size_t(len(keys)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	cKeys := (*[1<<30 - 1]*C.char)(cArray)
+
+	for i, key := range keys {
+		cKeys[i] = C.CString(key)
+	}
+
+	result.is_valid = 1
+	result.items = (**C.char)(cArray)
+	result.count = C.int(len(keys))
+	result.error = nil
+	return result
+}
+
+//export FreeJsonArrayResult
+func FreeJsonArrayResult(result *C.JsonArrayResult) {
+	if result.items != nil {
+		// Convert to Go slice to free each string
+		cKeys := (*[1<<30]*C.char)(unsafe.Pointer(result.items))[:result.count:result.count]
+		for i := 0; i < int(result.count); i++ {
+			C.free(unsafe.Pointer(cKeys[i]))
+		}
+		C.free(unsafe.Pointer(result.items))
+	}
+	if result.error != nil {
+		C.free(unsafe.Pointer(result.error))
+	}
+}
+
+//export GetJSONValueByPath
+func GetJSONValueByPath(jsonStr *C.char, path *C.char) C.JsonResult {
+    goJsonStr := C.GoString(jsonStr)
+    goPath := C.GoString(path)
+    var result C.JsonResult
+
+    var data interface{}
+    err := json.Unmarshal([]byte(goJsonStr), &data)
+    if err != nil {
+        result.is_valid = 0
+        result.error = C.CString(err.Error())
+        return result
+    }
+
+    current := data
+    pathParts := strings.Split(goPath, ".")
+    for _, part := range pathParts {
+        if part == "" {
+            continue
+        }
+
+        switch v := current.(type) {
+        case map[string]interface{}:
+            val, exists := v[part]
+            if !exists {
+                result.is_valid = 0
+                result.error = C.CString(fmt.Sprintf("path '%s' not found", part))
+                return result
+            }
+            current = val
+        case []interface{}:
+            index, err := strconv.Atoi(part)
+            if err != nil || index < 0 || index >= len(v) {
+                result.is_valid = 0
+                result.error = C.CString(fmt.Sprintf("invalid array index '%s'", part))
+                return result
+            }
+            current = v[index]
+        default:
+            result.is_valid = 0
+            result.error = C.CString(fmt.Sprintf("cannot traverse path '%s'", part))
+            return result
+        }
+    }
+
+    jsonBytes, err := json.Marshal(current)
+    if err != nil {
+        result.is_valid = 0
+        result.error = C.CString(err.Error())
+        return result
+    }
+
+    result.is_valid = 1
+    result.value = C.CString(string(jsonBytes))
+    result.error = nil
+    return result
+}
+
 
 func main() {}
