@@ -26,85 +26,16 @@ import (
 	"strings"
 )
 
-// ... (las funciones anteriores ParseJSON, GetJSONValue, etc. se mantienen igual)
-
-//export GetArrayLength
-func GetArrayLength(jsonStr *C.char) C.JsonResult {
-    goStr := C.GoString(jsonStr)
-    var result C.JsonResult
-
-    // Verificar si es un array
-    if len(goStr) == 0 || goStr[0] != '[' {
-        result.is_valid = 0
-        result.error = C.CString("not a JSON array")
-        return result
-    }
-
-    var arr []interface{}
-    err := json.Unmarshal([]byte(goStr), &arr)
-    if err != nil {
-        result.is_valid = 0
-        result.error = C.CString(err.Error())
-        return result
-    }
-
-    // Convertir el length a string
-    lengthStr := strconv.Itoa(len(arr))
-    
-    result.is_valid = 1
-    result.value = C.CString(lengthStr)
-    result.error = nil
-    return result
-}
-
-//export GetArrayItem
-func GetArrayItem(jsonStr *C.char, index int) C.JsonResult {
+//export IsValidJSON
+func IsValidJSON(jsonStr *C.char) C.int {
 	goStr := C.GoString(jsonStr)
-	var result C.JsonResult
-
-	var arr []interface{}
-	err := json.Unmarshal([]byte(goStr), &arr)
+	var js interface{}
+	err := json.Unmarshal([]byte(goStr), &js)
 	if err != nil {
-		result.is_valid = 0
-		result.error = C.CString(err.Error())
-		return result
+		return 0
 	}
-
-	if index < 0 || index >= len(arr) {
-		result.is_valid = 0
-		result.error = C.CString("index out of bounds")
-		return result
-	}
-
-	itemBytes, err := json.Marshal(arr[index])
-	if err != nil {
-		result.is_valid = 0
-		result.error = C.CString(err.Error())
-		return result
-	}
-
-	result.is_valid = 1
-	result.value = C.CString(string(itemBytes))
-	result.error = nil
-	return result
+	return 1
 }
-
-//export FreeJsonResult
-func FreeJsonResult(result *C.JsonResult) {
-	if result.value != nil {
-		C.free(unsafe.Pointer(result.value))
-	}
-	if result.error != nil {
-		C.free(unsafe.Pointer(result.error))
-	}
-}
-
-
-
-
-
-
-
 
 //export ParseJSON
 func ParseJSON(jsonStr *C.char) C.JsonResult {
@@ -224,6 +155,75 @@ func GetJSONValueByPath(jsonStr *C.char, path *C.char) C.JsonResult {
 	return result
 }
 
+//export GetArrayLength
+func GetArrayLength(jsonStr *C.char) C.JsonResult {
+	goStr := C.GoString(jsonStr)
+	var result C.JsonResult
 
+	// Verificar si es un array
+	if len(goStr) == 0 || goStr[0] != '[' {
+		result.is_valid = 0
+		result.error = C.CString("not a JSON array")
+		return result
+	}
+
+	var arr []interface{}
+	err := json.Unmarshal([]byte(goStr), &arr)
+	if err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	// Convertir el length a string
+	lengthStr := strconv.Itoa(len(arr))
+	
+	result.is_valid = 1
+	result.value = C.CString(lengthStr)
+	result.error = nil
+	return result
+}
+
+//export GetArrayItem
+func GetArrayItem(jsonStr *C.char, index int) C.JsonResult {
+	goStr := C.GoString(jsonStr)
+	var result C.JsonResult
+
+	var arr []interface{}
+	err := json.Unmarshal([]byte(goStr), &arr)
+	if err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	if index < 0 || index >= len(arr) {
+		result.is_valid = 0
+		result.error = C.CString("index out of bounds")
+		return result
+	}
+
+	itemBytes, err := json.Marshal(arr[index])
+	if err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	result.is_valid = 1
+	result.value = C.CString(string(itemBytes))
+	result.error = nil
+	return result
+}
+
+//export FreeJsonResult
+func FreeJsonResult(result *C.JsonResult) {
+	if result.value != nil {
+		C.free(unsafe.Pointer(result.value))
+	}
+	if result.error != nil {
+		C.free(unsafe.Pointer(result.error))
+	}
+}
 
 func main() {}
