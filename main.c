@@ -1,177 +1,104 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include "SQL2JSON.h"
 #include "JSON.h"
 
-char* value(JsonResult result) {
-    if (result.is_valid) {
-        return result.value;
+void imprimir_sin_comillas(char* str) {
+    if (str == NULL) return;
+    
+    size_t len = strlen(str);
+    if (len >= 2 && str[0] == '"' && str[len-1] == '"') {
+        printf("%.*s", (int)(len-2), str+1);
     } else {
-        return "";
+        printf("%s", str);
     }
 }
 
-int main() {
-
-/*JSON de prueba:
-[
-    { 
-        "documento":"pasaporte",
-        "numero":"B00000001"
-    },
-    {
-        "documento":"pasaporte",
-        "numero":"B00000002"
+void mostrar_elemento_json(char* json_str, int indice) {
+    JsonResult parseado = ParseJSON(json_str);
+    if (!parseado.is_valid) {
+        printf("Error al parsear elemento: %s\n", parseado.error);
+        FreeJsonResult(&parseado);
+        return;
     }
-]
-*/
-    char* json_data = "[{\"documento\":\"pasaporte\",\"numero\":\"B00000001\"},{\"documento\":\"pasaporte\",\"numero\":\"B00000002\"}]";
-    printf("Procesando JSON completo:\n%s\n", json_data);
+    FreeJsonResult(&parseado);
 
-
-    
-    // 1. Verificar parsing básico
-    JsonResult parse_test = ParseJSON(json_data);
-    printf("\nTest de parsing: ");
-    if (!parse_test.is_valid) {
-        printf("Error: %s\n", parse_test.error);
-        FreeJsonResult(&parse_test);
-        return 1;
+    JsonArrayResult claves = GetJSONKeys(json_str);
+    if (!claves.is_valid) {
+        printf("Error al obtener claves: %s\n", claves.error);
+        FreeJsonArrayResult(&claves);
+        return;
     }
-    printf("El JSON válido\n");
-    FreeJsonResult(&parse_test);
+
+    printf("Elemento %d:\n", indice + 1);
     
-
-
-    // 2. Obtener longitud del array
-    JsonResult length_result = GetArrayLength(json_data);
-    printf("\nLongitud del array: ");
-    if (!length_result.is_valid) {
-        printf("Error: %s\n", length_result.error);
-        FreeJsonResult(&length_result);
-        return 1;
-    } 
-    int array_length = atoi(length_result.value);
-    FreeJsonResult(&length_result);
-    printf("El array contiene %d elementos\n", array_length);
-
-
-    
-    // 3. Procesar cada elemento si la longitud es correcta
-    if (array_length > 0) {
-        for (int i = 0; i < array_length; i++) {
-            printf("\nElemento %d:\n", i+1);
-            
-            JsonResult item_result = GetArrayItem(json_data, i);
-            if (!item_result.is_valid) {
-                printf("Error al obtener elemento: ");
-                printf("Error: %s\n", length_result.error);
-                FreeJsonResult(&item_result);
-                continue;
-            }
-            
-            printf("Contenido JSON: %s\n", item_result.value);
-            
-            // Extraer valores específicos
-            JsonResult documento = GetJSONValue(item_result.value, "documento");
-            JsonResult numero = GetJSONValue(item_result.value, "numero");
-            
-            printf("  data: %s\n", value(documento));
-            printf("  numero: %s\n", value(numero));
-                        
-            FreeJsonResult(&documento);
-            FreeJsonResult(&numero);
-            FreeJsonResult(&item_result);
-        }
-    } else {
-        printf("\nError: El array parece vacío o no se pudo determinar su longitud\n");
+    for (int i = 0; i < claves.count; i++) {
+        char* clave = claves.items[i];
+        JsonResult valor = GetJSONValue(json_str, clave);
+        
+        printf("  %s: ", clave);
+        imprimir_sin_comillas(valor.value);
+        printf("\n");
+        
+        FreeJsonResult(&valor);
     }
     printf("\n");
     
-    return 0;
-}
-
-
-
-
-
-/*
-char* simple_test = "[1,2,3]";
-JsonResult test = GetArrayLength(simple_test);
-print_result(test);
-*/
-
-/*
-#include <stdio.h>
-#include <stdlib.h>
-#include "JSON.h"
-
-void print_result(JsonResult result) {
-    if (result.is_valid) {
-        printf("Value: %s\n", result.value);
-    } else {
-        printf("Error: %s\n", result.error);
-    }
+    FreeJsonArrayResult(&claves);
 }
 
 int main() {
-    // JSON complejo de ejemplo
-    char* complex_json = "{"
-        "\"person\": {"
-            "\"name\": \"John\","
-            "\"age\": 30,"
-            "\"address\": {"
-                "\"street\": \"123 Main St\","
-                "\"city\": \"New York\""
-            "},"
-            "\"hobbies\": [\"reading\", \"swimming\", \"coding\"]"
-        "},"
-        "\"active\": true"
-    "}";
+    char* conexion = "root:123456@tcp(192.100.1.210:3306)/chat";
+    char* query = "select usuarios, mensajes from mensajeria;";
     
-    // 1. Parsear el JSON completo
-    JsonResult parsed = ParseJSON(complex_json);
-    printf("Parsed JSON:\n");
-    print_result(parsed);
-    FreeJsonResult(&parsed);
+    char* json = SQLrun(conexion, query, 0, 0);
+    if (json == NULL) {
+        printf("Error al ejecutar la consulta SQL\n");
+        return 1;
+    }
+    printf("Resultado JSON:\n%s\n\n", json);
+
+    JsonResult parseado = ParseJSON(json);
+    if (!parseado.is_valid) {
+        printf("Error al parsear JSON: %s\n", parseado.error);
+        FreeJsonResult(&parseado);
+        FreeString(json);
+        return 1;
+    }
+    FreeJsonResult(&parseado);
     
-    // 2. Obtener un objeto anidado
-    JsonResult person = GetJSONValue(complex_json, "person");
-    printf("\nPerson object:\n");
-    print_result(person);
+    int es_array = (json[0] == '[');
     
-    // 3. Obtener un valor del objeto anidado
-    JsonResult name = GetJSONValue(person.value, "name");
-    printf("\nName:\n");
-    print_result(name);
-    
-    // 4. Obtener un array
-    JsonResult hobbies = GetJSONValue(person.value, "hobbies");
-    printf("\nHobbies array:\n");
-    print_result(hobbies);
-    
-    // 5. Obtener un valor por path
-    JsonResult street = GetJSONValueByPath(complex_json, "person.address.street");
-    printf("\nStreet (by path):\n");
-    print_result(street);
-    
-    // 6. Obtener elemento de array por path
-    JsonResult first_hobby = GetJSONValueByPath(complex_json, "person.hobbies.0");
-    printf("\nFirst hobby (by path):\n");
-    print_result(first_hobby);
-    
-    // 7. Manejo de errores
-    JsonResult invalid = GetJSONValueByPath(complex_json, "person.invalid.key");
-    printf("\nInvalid path:\n");
-    print_result(invalid);
-    
-    // Liberar memoria
-    FreeJsonResult(&person);
-    FreeJsonResult(&name);
-    FreeJsonResult(&hobbies);
-    FreeJsonResult(&street);
-    FreeJsonResult(&first_hobby);
-    FreeJsonResult(&invalid);
+    if (es_array) {
+        JsonResult longitud = GetArrayLength(json);
+        if (!longitud.is_valid) {
+            printf("Error al obtener longitud: %s\n", longitud.error);
+            FreeJsonResult(&longitud);
+            FreeString(json);
+            return 1;
+        }
+        
+        int num_elementos = atoi(longitud.value);
+        FreeJsonResult(&longitud);
+        
+        printf("Total de elementos: %d\n\n", num_elementos);
+        
+        for (int i = 0; i < num_elementos; i++) {
+            JsonResult elemento = GetArrayItem(json, i);
+            if (!elemento.is_valid) {
+                printf("Error al obtener elemento %d: %s\n", i, elemento.error);
+                continue;
+            }
+            
+            mostrar_elemento_json(elemento.value, i);
+            
+            FreeJsonResult(&elemento);
+        }
+    } else {
+        mostrar_elemento_json(json, 0);
+    }
+
+    FreeString(json);
     
     return 0;
-}*/
+}
