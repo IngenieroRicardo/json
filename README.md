@@ -29,6 +29,40 @@ Fue recompilada usando el siguiente comando: go build -o JSON.dll -buildmode=c-s
 #include <stdlib.h>
 #include "JSON.h"
 
+
+int main() {
+    char* json = "{\"nombre\":\"Juan\", \"edad\":30}";
+    
+    // Analizar JSON
+    JsonResult resultado = ParseJSON(json);
+    
+    if (resultado.is_valid) {
+        printf("JSON válido: %s\n", resultado.value);
+    } else {
+        printf("Error: %s\n", resultado.error);
+    }
+    
+    // Obtener valor específico
+    JsonResult nombre = GetJSONValue(json, "nombre");
+    printf("Nombre: %s\n", nombre.value);
+    
+    // Liberar memoria
+    FreeJsonResult(&resultado);
+    FreeJsonResult(&nombre);
+    
+    return 0;
+}
+```
+
+
+
+### 🧪 Ejemplo avanzado 1
+
+```C
+#include <stdio.h>
+#include <stdlib.h>
+#include "JSON.h"
+
 void imprimir_resultado(JsonResult resultado) {
     if (resultado.is_valid) {
         printf("Valor: %s\n", resultado.value);
@@ -102,7 +136,7 @@ int main() {
 
 ---
 
-### 🧪 Ejemplo avanzado
+### 🧪 Ejemplo avanzado 2
 
 ```C
 #include <stdio.h>
