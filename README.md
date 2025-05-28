@@ -191,3 +191,14 @@ int main() {
 }
 ```
 
+
+## Features
+
+- ✅ Parse and validate JSON strings
+- 🔍 Extract values by key or JSON path
+- 📦 Handle JSON arrays (get length, access items)
+- 🚀 C-compatible interface for integration with other languages
+- 🧠 Memory-safe operations with proper cleanup
+- 📝 Comprehensive error handling
+
+---
