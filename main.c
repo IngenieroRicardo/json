@@ -1,42 +1,61 @@
-/*#include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "libjsonparser.h"
+#include "JSON.h"
 
-void print_result(JsonResult result) {
+char* value(JsonResult result) {
     if (result.is_valid) {
-        printf("Valor: %s\n", result.value);
+        return result.value;
     } else {
-        printf("Error: %s\n", result.error);
+        return "";
     }
 }
 
 int main() {
-    // JSON de ejemplo
-    char* json_data = "[{\"data\":\"a\",\"query\":\"22\"},{\"data\":\"b\",\"query\":\"33\"}]";
-    
-    printf("Procesando JSON completo:\n%s\n\n", json_data);
+
+/*JSON de prueba:
+[
+    { 
+        "documento":"pasaporte",
+        "numero":"B00000001"
+    },
+    {
+        "documento":"pasaporte",
+        "numero":"B00000002"
+    }
+]
+*/
+    char* json_data = "[{\"documento\":\"pasaporte\",\"numero\":\"B00000001\"},{\"documento\":\"pasaporte\",\"numero\":\"B00000002\"}]";
+    printf("Procesando JSON completo:\n%s\n", json_data);
+
+
     
     // 1. Verificar parsing básico
     JsonResult parse_test = ParseJSON(json_data);
-    printf("Test de parsing:\n");
-    print_result(parse_test);
+    printf("\nTest de parsing: ");
+    if (!parse_test.is_valid) {
+        printf("Error: %s\n", parse_test.error);
+        FreeJsonResult(&parse_test);
+        return 1;
+    }
+    printf("El JSON válido\n");
     FreeJsonResult(&parse_test);
     
+
+
     // 2. Obtener longitud del array
     JsonResult length_result = GetArrayLength(json_data);
     printf("\nLongitud del array: ");
-    print_result(length_result);
-    
     if (!length_result.is_valid) {
+        printf("Error: %s\n", length_result.error);
         FreeJsonResult(&length_result);
         return 1;
-    }
-    
+    } 
     int array_length = atoi(length_result.value);
     FreeJsonResult(&length_result);
-    
-    printf("\nEl array contiene %d elementos:\n", array_length);
+    printf("El array contiene %d elementos\n", array_length);
+
+
     
     // 3. Procesar cada elemento si la longitud es correcta
     if (array_length > 0) {
@@ -46,7 +65,7 @@ int main() {
             JsonResult item_result = GetArrayItem(json_data, i);
             if (!item_result.is_valid) {
                 printf("Error al obtener elemento: ");
-                print_result(item_result);
+                printf("Error: %s\n", length_result.error);
                 FreeJsonResult(&item_result);
                 continue;
             }
@@ -54,24 +73,23 @@ int main() {
             printf("Contenido JSON: %s\n", item_result.value);
             
             // Extraer valores específicos
-            JsonResult data = GetJSONValue(item_result.value, "data");
-            JsonResult query = GetJSONValue(item_result.value, "query");
+            JsonResult documento = GetJSONValue(item_result.value, "documento");
+            JsonResult numero = GetJSONValue(item_result.value, "numero");
             
-            printf("  data: ");
-            print_result(data);
-            printf("  query: ");
-            print_result(query);
-            
-            FreeJsonResult(&data);
-            FreeJsonResult(&query);
+            printf("  data: %s\n", value(documento));
+            printf("  numero: %s\n", value(numero));
+                        
+            FreeJsonResult(&documento);
+            FreeJsonResult(&numero);
             FreeJsonResult(&item_result);
         }
     } else {
-        printf("\nERROR: El array parece vacío o no se pudo determinar su longitud\n");
+        printf("\nError: El array parece vacío o no se pudo determinar su longitud\n");
     }
+    printf("\n");
     
     return 0;
-}*/
+}
 
 
 
@@ -83,10 +101,10 @@ JsonResult test = GetArrayLength(simple_test);
 print_result(test);
 */
 
-
+/*
 #include <stdio.h>
 #include <stdlib.h>
-#include "libjsonparser.h"
+#include "JSON.h"
 
 void print_result(JsonResult result) {
     if (result.is_valid) {
@@ -156,4 +174,4 @@ int main() {
     FreeJsonResult(&invalid);
     
     return 0;
-}
+}*/
