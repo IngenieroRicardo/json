@@ -29,72 +29,72 @@ Fue recompilada usando el siguiente comando: go build -o JSON.dll -buildmode=c-s
 #include <stdlib.h>
 #include "JSON.h"
 
-void print_result(JsonResult result) {
-    if (result.is_valid) {
-        printf("Value: %s\n", result.value);
+void imprimir_resultado(JsonResult resultado) {
+    if (resultado.is_valid) {
+        printf("Valor: %s\n", resultado.value);
     } else {
-        printf("Error: %s\n", result.error);
+        printf("Error: %s\n", resultado.error);
     }
 }
 
 int main() {
     // JSON complejo de ejemplo
-    char* complex_json = "{"
-        "\"person\": {"
-            "\"name\": \"John\","
-            "\"age\": 30,"
-            "\"address\": {"
-                "\"street\": \"123 Main St\","
-                "\"city\": \"New York\""
+    char* json_complejo = "{"
+        "\"persona\": {"
+            "\"nombre\": \"Juan\","
+            "\"edad\": 30,"
+            "\"direccion\": {"
+                "\"calle\": \"123 Calle Principal\","
+                "\"ciudad\": \"Ciudad de México\""
             "},"
-            "\"hobbies\": [\"reading\", \"swimming\", \"coding\"]"
+            "\"pasatiempos\": [\"leer\", \"nadar\", \"programar\"]"
         "},"
-        "\"active\": true"
+        "\"activo\": true"
     "}";
     
-    // 1. Parsear el JSON completo
-    JsonResult parsed = ParseJSON(complex_json);
-    printf("Parsed JSON:\n");
-    print_result(parsed);
-    FreeJsonResult(&parsed);
+    // 1. Analizar (parsear) el JSON completo
+    JsonResult parseado = ParseJSON(json_complejo);
+    printf("JSON parseado:\n");
+    imprimir_resultado(parseado);
+    FreeJsonResult(&parseado);
     
     // 2. Obtener un objeto anidado
-    JsonResult person = GetJSONValue(complex_json, "person");
-    printf("\nPerson object:\n");
-    print_result(person);
+    JsonResult persona = GetJSONValue(json_complejo, "persona");
+    printf("\nObjeto persona:\n");
+    imprimir_resultado(persona);
     
     // 3. Obtener un valor del objeto anidado
-    JsonResult name = GetJSONValue(person.value, "name");
-    printf("\nName:\n");
-    print_result(name);
+    JsonResult nombre = GetJSONValue(persona.value, "nombre");
+    printf("\nNombre:\n");
+    imprimir_resultado(nombre);
     
     // 4. Obtener un array
-    JsonResult hobbies = GetJSONValue(person.value, "hobbies");
-    printf("\nHobbies array:\n");
-    print_result(hobbies);
+    JsonResult pasatiempos = GetJSONValue(persona.value, "pasatiempos");
+    printf("\nArray de pasatiempos:\n");
+    imprimir_resultado(pasatiempos);
     
-    // 5. Obtener un valor por path
-    JsonResult street = GetJSONValueByPath(complex_json, "person.address.street");
-    printf("\nStreet (by path):\n");
-    print_result(street);
+    // 5. Obtener un valor por ruta (path)
+    JsonResult calle = GetJSONValueByPath(json_complejo, "persona.direccion.calle");
+    printf("\nCalle (por ruta):\n");
+    imprimir_resultado(calle);
     
-    // 6. Obtener elemento de array por path
-    JsonResult first_hobby = GetJSONValueByPath(complex_json, "person.hobbies.0");
-    printf("\nFirst hobby (by path):\n");
-    print_result(first_hobby);
+    // 6. Obtener elemento de array por ruta
+    JsonResult primer_pasatiempo = GetJSONValueByPath(json_complejo, "persona.pasatiempos.0");
+    printf("\nPrimer pasatiempo (por ruta):\n");
+    imprimir_resultado(primer_pasatiempo);
     
     // 7. Manejo de errores
-    JsonResult invalid = GetJSONValueByPath(complex_json, "person.invalid.key");
-    printf("\nInvalid path:\n");
-    print_result(invalid);
+    JsonResult invalido = GetJSONValueByPath(json_complejo, "persona.clave.invalida");
+    printf("\nRuta inválida:\n");
+    imprimir_resultado(invalido);
     
     // Liberar memoria
-    FreeJsonResult(&person);
-    FreeJsonResult(&name);
-    FreeJsonResult(&hobbies);
-    FreeJsonResult(&street);
-    FreeJsonResult(&first_hobby);
-    FreeJsonResult(&invalid);
+    FreeJsonResult(&persona);
+    FreeJsonResult(&nombre);
+    FreeJsonResult(&pasatiempos);
+    FreeJsonResult(&calle);
+    FreeJsonResult(&primer_pasatiempo);
+    FreeJsonResult(&invalido);
     
     return 0;
 }
