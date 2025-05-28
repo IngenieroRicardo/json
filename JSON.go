@@ -261,5 +261,52 @@ func GetJSONValueByPath(jsonStr *C.char, path *C.char) C.JsonResult {
     return result
 }
 
+//export GetArrayItems
+func GetArrayItems(jsonStr *C.char) C.JsonArrayResult {
+    goStr := C.GoString(jsonStr)
+    var result C.JsonArrayResult
+
+    // Verificar si es un array JSON válido
+    if len(goStr) == 0 || goStr[0] != '[' {
+        result.is_valid = 0
+        result.error = C.CString("not a JSON array")
+        return result
+    }
+
+    var arr []interface{}
+    err := json.Unmarshal([]byte(goStr), &arr)
+    if err != nil {
+        result.is_valid = 0
+        result.error = C.CString(err.Error())
+        return result
+    }
+
+    // Allocate memory for the C array of strings
+    cArray := C.malloc(C.size_t(len(arr)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+    cItems := (*[1<<30 - 1]*C.char)(unsafe.Pointer(cArray))
+
+    for i, item := range arr {
+        itemBytes, err := json.Marshal(item)
+        if err != nil {
+            // Liberar memoria ya asignada si hay error
+            for j := 0; j < i; j++ {
+                C.free(unsafe.Pointer(cItems[j]))
+            }
+            C.free(cArray)
+            
+            result.is_valid = 0
+            result.error = C.CString(err.Error())
+            return result
+        }
+        cItems[i] = C.CString(string(itemBytes))
+    }
+
+    result.is_valid = 1
+    result.items = (**C.char)(cArray)
+    result.count = C.int(len(arr))
+    result.error = nil
+    return result
+}
+
 
 func main() {}
