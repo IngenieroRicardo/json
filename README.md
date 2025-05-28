@@ -26,12 +26,23 @@ Compilada usando: `go build -o JSON.dll -buildmode=c-shared JSON.go`
 
 ```C
 #include <stdio.h>
-#include <stdlib.h>
 #include "JSON.h"
 
+// Función para eliminar comillas de una cadena (si las tiene)
+char* quitar_comillas(char* str) {
+    if (str == NULL){
+      return NULL;  
+    } 
+    size_t len = strlen(str);
+    if (len >= 2 && str[0] == '"' && str[len-1] == '"') {
+        str[len-1] = '\0';  // Eliminar comilla final
+        return str + 1;      // Saltar comilla inicial
+    }
+    return str;
+}
 
 int main() {
-    char* json = "{\"nombre\":\"Juan\", \"edad\":30}";
+    char* json = "{\"nombre\":\"Juan\", \"edad\":30, \"direccion\": {\"pais\":\"Villa Lactea\",\"departamento\":\"Tierra\"} }";
     
     // Analizar JSON
     JsonResult resultado = ParseJSON(json);
@@ -42,13 +53,18 @@ int main() {
         printf("Error: %s\n", resultado.error);
     }
     
-    // Obtener valor específico
+    // Obtener valores
     JsonResult nombre = GetJSONValue(json, "nombre");
-    printf("Nombre: %s\n", nombre.value);
+    JsonResult pais = GetJSONValue(GetJSONValue(json, "direccion").value, "pais");
+    
+    // Mostrar valores sin comillas
+    printf("Nombre: %s\n", quitar_comillas(nombre.value));
+    printf("País: %s\n", quitar_comillas(pais.value));
     
     // Liberar memoria
     FreeJsonResult(&resultado);
     FreeJsonResult(&nombre);
+    FreeJsonResult(&pais);
     
     return 0;
 }
