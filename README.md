@@ -1,6 +1,6 @@
 # JSON
-Libreria C para leer JSON.
-Fue recompilada usando el siguiente comando: go build -o JSON.dll -buildmode=c-shared JSON.go
+Una biblioteca ligera para leer y procesar JSON en C.  
+Compilada usando: `go build -o JSON.dll -buildmode=c-shared JSON.go`
 
 ---
 
@@ -225,14 +225,14 @@ int main() {
 }
 ```
 
+## Características
 
-## Features
+- ✅ Analizar y validar cadenas JSON
+- 🔍 Extraer valores por clave o ruta JSON
+- 📦 Manejar arrays JSON (obtener longitud, acceder a elementos)
+- 🚀 Interfaz compatible con C para integración con otros lenguajes
+- 🧠 Operaciones seguras en memoria con limpieza adecuada
+- 📝 Manejo completo de errores
 
-- ✅ Parse and validate JSON strings
-- 🔍 Extract values by key or JSON path
-- 📦 Handle JSON arrays (get length, access items)
-- 🚀 C-compatible interface for integration with other languages
-- 🧠 Memory-safe operations with proper cleanup
-- 📝 Comprehensive error handling
 
 ---
