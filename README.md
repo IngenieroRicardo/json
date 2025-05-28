@@ -162,6 +162,14 @@ int main() {
 
 char* value(JsonResult result) {
     if (result.is_valid) {
+        if (result.value == NULL){
+            return "";  
+        } 
+        size_t len = strlen(result.value);
+        if (len >= 2 && result.value[0] == '"' && result.value[len-1] == '"') {
+            result.value[len-1] = '\0';  // Eliminar comilla final
+            return result.value + 1;      // Saltar comilla inicial
+        }
         return result.value;
     } else {
         return "";
