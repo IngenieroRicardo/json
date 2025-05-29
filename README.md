@@ -217,10 +217,53 @@ int main() {
 }
 ```
 
-## Características
-
-- ✅ Analizar y validar cadenas JSON
-- 📝 Manejo completo de errores
+---
 
 
+```markdown
+## 📚 Documentación de la API
+
+### Funciones Principales
+
+#### Manejo Básico de JSON
+- `JsonResult ParseJSON(const char* json_str)`: Analiza una cadena JSON
+- `int IsValidJSON(const char* json_str)`: Verifica si una cadena es JSON válido
+
+#### Obtención de Valores
+- `JsonResult GetJSONValue(const char* json_str, const char* key)`: Obtiene valor por clave
+- `JsonResult GetJSONValueByPath(const char* json_str, const char* path)`: Obtiene valor por ruta
+- `JsonResult GetArrayLength(const char* json_str)`: Obtiene longitud de array
+- `JsonResult GetArrayItem(const char* json_str, int index)`: Obtiene elemento de array
+
+#### Construcción/Modificación
+- `JsonResult CreateEmptyJSON()`: Crea objeto JSON vacío
+- `JsonResult CreateEmptyArray()`: Crea array JSON vacío
+- `JsonResult AddStringToJSON(const char* json_str, const char* key, const char* value)`
+- `JsonResult AddNumberToJSON(const char* json_str, const char* key, double value)`
+- `JsonResult AddBooleanToJSON(const char* json_str, const char* key, int value)`
+- `JsonResult AddJSONToJSON(const char* parent_json, const char* key, const char* child_json)`
+- `JsonResult AddItemToArray(const char* json_array, const char* item)`
+- `JsonResult RemoveKeyFromJSON(const char* json_str, const char* key)`
+- `JsonResult RemoveItemFromArray(const char* json_array, int index)`
+- `JsonResult MergeJSON(const char* json1, const char* json2)`: Combina dos JSONs
+
+#### Utilidades
+- `JsonResult PrettyPrintJSON(const char* json_str)`: Formatea JSON con indentación
+- `void FreeJsonResult(JsonResult* result)`: Libera memoria de resultados
+- `void FreeJsonArrayResult(JsonArrayResult* result)`: Libera memoria de arrays
+
+### Estructuras
+```c
+typedef struct {
+    char* value;      // Valor obtenido
+    int is_valid;     // 1 si es válido, 0 si hay error
+    char* error;      // Mensaje de error (si lo hay)
+} JsonResult;
+
+typedef struct {
+    char** items;     // Array de elementos
+    int count;        // Número de elementos
+    int is_valid;     // 1 si es válido, 0 si hay error
+    char* error;      // Mensaje de error (si lo hay)
+} JsonArrayResult;
 ---
