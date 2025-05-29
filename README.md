@@ -133,88 +133,9 @@ int main() {
 }
 ```
 
-
-### 🧪 Ejemplo avanzado 1 para leer JSON
-
-```C
-#include <stdio.h>
-#include <stdlib.h>
-#include "JSON.h"
-
-void imprimir_resultado(JsonResult resultado) {
-    if (resultado.is_valid) {
-        printf("Valor: %s\n", resultado.value);
-    } else {
-        printf("Error: %s\n", resultado.error);
-    }
-}
-
-int main() {
-    // JSON complejo de ejemplo
-    char* json_complejo = "{"
-        "\"persona\": {"
-            "\"nombre\": \"Juan\","
-            "\"edad\": 30,"
-            "\"direccion\": {"
-                "\"calle\": \"123 Calle Principal\","
-                "\"ciudad\": \"Ciudad de México\""
-            "},"
-            "\"pasatiempos\": [\"leer\", \"nadar\", \"programar\"]"
-        "},"
-        "\"activo\": true"
-    "}";
-    
-    // 1. Analizar (parsear) el JSON completo
-    JsonResult parseado = ParseJSON(json_complejo);
-    printf("JSON parseado:\n");
-    imprimir_resultado(parseado);
-    FreeJsonResult(&parseado);
-    
-    // 2. Obtener un objeto anidado
-    JsonResult persona = GetJSONValue(json_complejo, "persona");
-    printf("\nObjeto persona:\n");
-    imprimir_resultado(persona);
-    
-    // 3. Obtener un valor del objeto anidado
-    JsonResult nombre = GetJSONValue(persona.value, "nombre");
-    printf("\nNombre:\n");
-    imprimir_resultado(nombre);
-    
-    // 4. Obtener un array
-    JsonResult pasatiempos = GetJSONValue(persona.value, "pasatiempos");
-    printf("\nArray de pasatiempos:\n");
-    imprimir_resultado(pasatiempos);
-    
-    // 5. Obtener un valor por ruta (path)
-    JsonResult calle = GetJSONValueByPath(json_complejo, "persona.direccion.calle");
-    printf("\nCalle (por ruta):\n");
-    imprimir_resultado(calle);
-    
-    // 6. Obtener elemento de array por ruta
-    JsonResult primer_pasatiempo = GetJSONValueByPath(json_complejo, "persona.pasatiempos.0");
-    printf("\nPrimer pasatiempo (por ruta):\n");
-    imprimir_resultado(primer_pasatiempo);
-    
-    // 7. Manejo de errores
-    JsonResult invalido = GetJSONValueByPath(json_complejo, "persona.clave.invalida");
-    printf("\nRuta inválida:\n");
-    imprimir_resultado(invalido);
-    
-    // Liberar memoria
-    FreeJsonResult(&persona);
-    FreeJsonResult(&nombre);
-    FreeJsonResult(&pasatiempos);
-    FreeJsonResult(&calle);
-    FreeJsonResult(&primer_pasatiempo);
-    FreeJsonResult(&invalido);
-    
-    return 0;
-}
-```
-
 ---
 
-### 🧪 Ejemplo avanzado 2 para leer JSON
+### 🧪 Ejemplo avanzado para leer JSON
 
 ```C
 #include <stdio.h>
