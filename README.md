@@ -147,22 +147,6 @@ int main() {
 #include <string.h>
 #include "JSON.h"
 
-char* value(JsonResult result) {
-    if (result.is_valid) {
-        if (result.value == NULL){
-            return "";  
-        } 
-        size_t len = strlen(result.value);
-        if (len >= 2 && result.value[0] == '"' && result.value[len-1] == '"') {
-            result.value[len-1] = '\0';  // Eliminar comilla final
-            return result.value + 1;      // Saltar comilla inicial
-        }
-        return result.value;
-    } else {
-        return "";
-    }
-}
-
 int main() {
     /* Ejemplo de JSON para pruebas:
     [
@@ -220,8 +204,8 @@ int main() {
             JsonResult documento = GetJSONValue(item_result.value, "documento");
             JsonResult numero = GetJSONValue(item_result.value, "numero");
             
-            printf("  Tipo documento: %s\n", value(documento));
-            printf("  Número: %s\n", value(numero));
+            printf("  Tipo documento: %s\n", documento.value);
+            printf("  Número: %s\n", numero.value);
                         
             FreeJsonResult(&documento);
             FreeJsonResult(&numero);
