@@ -24,30 +24,38 @@ import (
 	"strconv"
 	"fmt"
 	"strings"
+	"bytes"
 )
+
+// ------------------------- Funciones Optimizadas -------------------------
 
 //export ParseJSON
 func ParseJSON(jsonStr *C.char) C.JsonResult {
 	goStr := C.GoString(jsonStr)
 	var result C.JsonResult
 
+	decoder := json.NewDecoder(bytes.NewReader([]byte(goStr)))
+	decoder.UseNumber()
+
 	var data interface{}
-	err := json.Unmarshal([]byte(goStr), &data)
-	if err != nil {
+	if err := decoder.Decode(&data); err != nil {
 		result.is_valid = 0
 		result.error = C.CString(err.Error())
 		return result
 	}
 
-	jsonBytes, err := json.Marshal(data)
-	if err != nil {
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+
+	if err := encoder.Encode(data); err != nil {
 		result.is_valid = 0
 		result.error = C.CString(err.Error())
 		return result
 	}
 
 	result.is_valid = 1
-	result.value = C.CString(string(jsonBytes))
+	result.value = C.CString(strings.TrimSpace(buf.String()))
 	result.error = nil
 	return result
 }
@@ -58,9 +66,11 @@ func GetJSONValue(jsonStr *C.char, key *C.char) C.JsonResult {
 	goKey := C.GoString(key)
 	var result C.JsonResult
 
+	decoder := json.NewDecoder(bytes.NewReader([]byte(goJsonStr)))
+	decoder.UseNumber()
+
 	var data map[string]interface{}
-	err := json.Unmarshal([]byte(goJsonStr), &data)
-	if err != nil {
+	if err := decoder.Decode(&data); err != nil {
 		result.is_valid = 0
 		result.error = C.CString(err.Error())
 		return result
@@ -73,17 +83,40 @@ func GetJSONValue(jsonStr *C.char, key *C.char) C.JsonResult {
 		return result
 	}
 
-	jsonBytes, err := json.Marshal(value)
-	if err != nil {
-		result.is_valid = 0
-		result.error = C.CString(err.Error())
+	switch v := value.(type) {
+	case string:
+		result.is_valid = 1
+		result.value = C.CString(v)
+		result.error = nil
+		return result
+	case json.Number:
+		result.is_valid = 1
+		result.value = C.CString(v.String())
+		result.error = nil
+		return result
+	case bool:
+		str := "false"
+		if v {
+			str = "true"
+		}
+		result.is_valid = 1
+		result.value = C.CString(str)
+		result.error = nil
+		return result
+	default:
+		var buf bytes.Buffer
+		encoder := json.NewEncoder(&buf)
+		encoder.SetEscapeHTML(false)
+		if err := encoder.Encode(value); err != nil {
+			result.is_valid = 0
+			result.error = C.CString(err.Error())
+			return result
+		}
+		result.is_valid = 1
+		result.value = C.CString(strings.TrimSpace(buf.String()))
+		result.error = nil
 		return result
 	}
-
-	result.is_valid = 1
-	result.value = C.CString(string(jsonBytes))
-	result.error = nil
-	return result
 }
 
 //export GetArrayLength
@@ -97,18 +130,29 @@ func GetArrayLength(jsonStr *C.char) C.JsonResult {
 		return result
 	}
 
-	var arr []interface{}
-	err := json.Unmarshal([]byte(goStr), &arr)
-	if err != nil {
+	decoder := json.NewDecoder(bytes.NewReader([]byte(goStr)))
+	decoder.UseNumber()
+
+	token, err := decoder.Token()
+	if err != nil || token != json.Delim('[') {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("invalid JSON array")
 		return result
 	}
 
-	lengthStr := strconv.Itoa(len(arr))
-	
+	count := 0
+	for decoder.More() {
+		var dummy interface{}
+		if err := decoder.Decode(&dummy); err != nil {
+			result.is_valid = 0
+			result.error = C.CString(err.Error())
+			return result
+		}
+		count++
+	}
+
 	result.is_valid = 1
-	result.value = C.CString(lengthStr)
+	result.value = C.CString(strconv.Itoa(count))
 	result.error = nil
 	return result
 }
@@ -118,30 +162,53 @@ func GetArrayItem(jsonStr *C.char, index int) C.JsonResult {
 	goStr := C.GoString(jsonStr)
 	var result C.JsonResult
 
-	var arr []interface{}
-	err := json.Unmarshal([]byte(goStr), &arr)
-	if err != nil {
+	decoder := json.NewDecoder(bytes.NewReader([]byte(goStr)))
+	decoder.UseNumber()
+
+	token, err := decoder.Token()
+	if err != nil || token != json.Delim('[') {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("invalid JSON array")
 		return result
 	}
 
-	if index < 0 || index >= len(arr) {
-		result.is_valid = 0
-		result.error = C.CString("index out of bounds")
-		return result
+	currentIndex := 0
+	for decoder.More() {
+		if currentIndex == index {
+			var item interface{}
+			if err := decoder.Decode(&item); err != nil {
+				result.is_valid = 0
+				result.error = C.CString(err.Error())
+				return result
+			}
+
+			var buf bytes.Buffer
+			encoder := json.NewEncoder(&buf)
+			encoder.SetEscapeHTML(false)
+			if err := encoder.Encode(item); err != nil {
+				result.is_valid = 0
+				result.error = C.CString(err.Error())
+				return result
+			}
+
+			result.is_valid = 1
+			result.value = C.CString(strings.TrimSpace(buf.String()))
+			result.error = nil
+			return result
+		}
+
+		// Skip this item
+		var dummy interface{}
+		if err := decoder.Decode(&dummy); err != nil {
+			result.is_valid = 0
+			result.error = C.CString(err.Error())
+			return result
+		}
+		currentIndex++
 	}
 
-	itemBytes, err := json.Marshal(arr[index])
-	if err != nil {
-		result.is_valid = 0
-		result.error = C.CString(err.Error())
-		return result
-	}
-
-	result.is_valid = 1
-	result.value = C.CString(string(itemBytes))
-	result.error = nil
+	result.is_valid = 0
+	result.error = C.CString("index out of bounds")
 	return result
 }
 
@@ -160,9 +227,11 @@ func GetJSONKeys(jsonStr *C.char) C.JsonArrayResult {
 	goJsonStr := C.GoString(jsonStr)
 	var result C.JsonArrayResult
 
+	decoder := json.NewDecoder(bytes.NewReader([]byte(goJsonStr)))
+	decoder.UseNumber()
+
 	var data map[string]interface{}
-	err := json.Unmarshal([]byte(goJsonStr), &data)
-	if err != nil {
+	if err := decoder.Decode(&data); err != nil {
 		result.is_valid = 0
 		result.error = C.CString(err.Error())
 		return result
@@ -173,7 +242,6 @@ func GetJSONKeys(jsonStr *C.char) C.JsonArrayResult {
 		keys = append(keys, key)
 	}
 
-	// Allocate C memory for the array
 	cArray := C.malloc(C.size_t(len(keys)) * C.size_t(unsafe.Sizeof(uintptr(0))))
 	cKeys := (*[1<<30 - 1]*C.char)(cArray)
 
@@ -191,7 +259,6 @@ func GetJSONKeys(jsonStr *C.char) C.JsonArrayResult {
 //export FreeJsonArrayResult
 func FreeJsonArrayResult(result *C.JsonArrayResult) {
 	if result.items != nil {
-		// Convert to Go slice to free each string
 		cKeys := (*[1<<30]*C.char)(unsafe.Pointer(result.items))[:result.count:result.count]
 		for i := 0; i < int(result.count); i++ {
 			C.free(unsafe.Pointer(cKeys[i]))
@@ -205,108 +272,526 @@ func FreeJsonArrayResult(result *C.JsonArrayResult) {
 
 //export GetJSONValueByPath
 func GetJSONValueByPath(jsonStr *C.char, path *C.char) C.JsonResult {
-    goJsonStr := C.GoString(jsonStr)
-    goPath := C.GoString(path)
-    var result C.JsonResult
+	goJsonStr := C.GoString(jsonStr)
+	goPath := C.GoString(path)
+	var result C.JsonResult
 
-    var data interface{}
-    err := json.Unmarshal([]byte(goJsonStr), &data)
-    if err != nil {
-        result.is_valid = 0
-        result.error = C.CString(err.Error())
-        return result
-    }
+	decoder := json.NewDecoder(bytes.NewReader([]byte(goJsonStr)))
+	decoder.UseNumber()
 
-    current := data
-    pathParts := strings.Split(goPath, ".")
-    for _, part := range pathParts {
-        if part == "" {
-            continue
-        }
+	var data interface{}
+	if err := decoder.Decode(&data); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
 
-        switch v := current.(type) {
-        case map[string]interface{}:
-            val, exists := v[part]
-            if !exists {
-                result.is_valid = 0
-                result.error = C.CString(fmt.Sprintf("path '%s' not found", part))
-                return result
-            }
-            current = val
-        case []interface{}:
-            index, err := strconv.Atoi(part)
-            if err != nil || index < 0 || index >= len(v) {
-                result.is_valid = 0
-                result.error = C.CString(fmt.Sprintf("invalid array index '%s'", part))
-                return result
-            }
-            current = v[index]
-        default:
-            result.is_valid = 0
-            result.error = C.CString(fmt.Sprintf("cannot traverse path '%s'", part))
-            return result
-        }
-    }
+	current := data
+	pathParts := strings.Split(goPath, ".")
+	for _, part := range pathParts {
+		if part == "" {
+			continue
+		}
 
-    jsonBytes, err := json.Marshal(current)
-    if err != nil {
-        result.is_valid = 0
-        result.error = C.CString(err.Error())
-        return result
-    }
+		switch v := current.(type) {
+		case map[string]interface{}:
+			val, exists := v[part]
+			if !exists {
+				result.is_valid = 0
+				result.error = C.CString(fmt.Sprintf("path '%s' not found", part))
+				return result
+			}
+			current = val
+		case []interface{}:
+			index, err := strconv.Atoi(part)
+			if err != nil || index < 0 || index >= len(v) {
+				result.is_valid = 0
+				result.error = C.CString(fmt.Sprintf("invalid array index '%s'", part))
+				return result
+			}
+			current = v[index]
+		default:
+			result.is_valid = 0
+			result.error = C.CString(fmt.Sprintf("cannot traverse path '%s'", part))
+			return result
+		}
+	}
 
-    result.is_valid = 1
-    result.value = C.CString(string(jsonBytes))
-    result.error = nil
-    return result
+	switch v := current.(type) {
+	case string:
+		result.is_valid = 1
+		result.value = C.CString(v)
+		result.error = nil
+		return result
+	case json.Number:
+		result.is_valid = 1
+		result.value = C.CString(v.String())
+		result.error = nil
+		return result
+	case bool:
+		str := "false"
+		if v {
+			str = "true"
+		}
+		result.is_valid = 1
+		result.value = C.CString(str)
+		result.error = nil
+		return result
+	case nil:
+		result.is_valid = 1
+		result.value = C.CString("null")
+		result.error = nil
+		return result
+	default:
+		var buf bytes.Buffer
+		encoder := json.NewEncoder(&buf)
+		encoder.SetEscapeHTML(false)
+		if err := encoder.Encode(current); err != nil {
+			result.is_valid = 0
+			result.error = C.CString(err.Error())
+			return result
+		}
+		result.is_valid = 1
+		result.value = C.CString(strings.TrimSpace(buf.String()))
+		result.error = nil
+		return result
+	}
 }
 
 //export GetArrayItems
 func GetArrayItems(jsonStr *C.char) C.JsonArrayResult {
-    goStr := C.GoString(jsonStr)
-    var result C.JsonArrayResult
+	goStr := C.GoString(jsonStr)
+	var result C.JsonArrayResult
 
-    // Verificar si es un array JSON válido
-    if len(goStr) == 0 || goStr[0] != '[' {
-        result.is_valid = 0
-        result.error = C.CString("not a JSON array")
-        return result
-    }
+	if len(goStr) == 0 || goStr[0] != '[' {
+		result.is_valid = 0
+		result.error = C.CString("not a JSON array")
+		return result
+	}
 
-    var arr []interface{}
-    err := json.Unmarshal([]byte(goStr), &arr)
-    if err != nil {
-        result.is_valid = 0
-        result.error = C.CString(err.Error())
-        return result
-    }
+	decoder := json.NewDecoder(bytes.NewReader([]byte(goStr)))
+	decoder.UseNumber()
 
-    // Allocate memory for the C array of strings
-    cArray := C.malloc(C.size_t(len(arr)) * C.size_t(unsafe.Sizeof(uintptr(0))))
-    cItems := (*[1<<30 - 1]*C.char)(unsafe.Pointer(cArray))
+	token, err := decoder.Token()
+	if err != nil || token != json.Delim('[') {
+		result.is_valid = 0
+		result.error = C.CString("invalid JSON array")
+		return result
+	}
 
-    for i, item := range arr {
-        itemBytes, err := json.Marshal(item)
-        if err != nil {
-            // Liberar memoria ya asignada si hay error
-            for j := 0; j < i; j++ {
-                C.free(unsafe.Pointer(cItems[j]))
-            }
-            C.free(cArray)
-            
-            result.is_valid = 0
-            result.error = C.CString(err.Error())
-            return result
-        }
-        cItems[i] = C.CString(string(itemBytes))
-    }
+	var items []string
+	for decoder.More() {
+		var item interface{}
+		if err := decoder.Decode(&item); err != nil {
+			// Liberar memoria ya asignada si hay error
+			for _, str := range items {
+				C.free(unsafe.Pointer(C.CString(str)))
+			}
+			result.is_valid = 0
+			result.error = C.CString(err.Error())
+			return result
+		}
 
-    result.is_valid = 1
-    result.items = (**C.char)(cArray)
-    result.count = C.int(len(arr))
-    result.error = nil
-    return result
+		var buf bytes.Buffer
+		encoder := json.NewEncoder(&buf)
+		encoder.SetEscapeHTML(false)
+		if err := encoder.Encode(item); err != nil {
+			for _, str := range items {
+				C.free(unsafe.Pointer(C.CString(str)))
+			}
+			result.is_valid = 0
+			result.error = C.CString(err.Error())
+			return result
+		}
+
+		items = append(items, strings.TrimSpace(buf.String()))
+	}
+
+	cArray := C.malloc(C.size_t(len(items)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	cItems := (*[1<<30 - 1]*C.char)(cArray)
+
+	for i, item := range items {
+		cItems[i] = C.CString(item)
+	}
+
+	result.is_valid = 1
+	result.items = (**C.char)(cArray)
+	result.count = C.int(len(items))
+	result.error = nil
+	return result
 }
 
+// ------------------------- Funciones de Construcción Optimizadas -------------------------
+
+//export CreateEmptyJSON
+func CreateEmptyJSON() C.JsonResult {
+	var result C.JsonResult
+	result.is_valid = 1
+	result.value = C.CString("{}")
+	result.error = nil
+	return result
+}
+
+//export CreateEmptyArray
+func CreateEmptyArray() C.JsonResult {
+	var result C.JsonResult
+	result.is_valid = 1
+	result.value = C.CString("[]")
+	result.error = nil
+	return result
+}
+
+//export AddStringToJSON
+func AddStringToJSON(jsonStr *C.char, key *C.char, value *C.char) C.JsonResult {
+	goJsonStr := C.GoString(jsonStr)
+	goKey := C.GoString(key)
+	goValue := C.GoString(value)
+	var result C.JsonResult
+
+	decoder := json.NewDecoder(bytes.NewReader([]byte(goJsonStr)))
+	decoder.UseNumber()
+
+	var data map[string]interface{}
+	if err := decoder.Decode(&data); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	data[goKey] = goValue
+
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(data); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	result.is_valid = 1
+	result.value = C.CString(strings.TrimSpace(buf.String()))
+	result.error = nil
+	return result
+}
+
+//export AddNumberToJSON
+func AddNumberToJSON(jsonStr *C.char, key *C.char, value float64) C.JsonResult {
+	goJsonStr := C.GoString(jsonStr)
+	goKey := C.GoString(key)
+	var result C.JsonResult
+
+	decoder := json.NewDecoder(bytes.NewReader([]byte(goJsonStr)))
+	decoder.UseNumber()
+
+	var data map[string]interface{}
+	if err := decoder.Decode(&data); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	data[goKey] = value
+
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(data); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	result.is_valid = 1
+	result.value = C.CString(strings.TrimSpace(buf.String()))
+	result.error = nil
+	return result
+}
+
+//export AddBooleanToJSON
+func AddBooleanToJSON(jsonStr *C.char, key *C.char, value C.int) C.JsonResult {
+	goJsonStr := C.GoString(jsonStr)
+	goKey := C.GoString(key)
+	goValue := value != 0
+	var result C.JsonResult
+
+	decoder := json.NewDecoder(bytes.NewReader([]byte(goJsonStr)))
+	decoder.UseNumber()
+
+	var data map[string]interface{}
+	if err := decoder.Decode(&data); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	data[goKey] = goValue
+
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(data); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	result.is_valid = 1
+	result.value = C.CString(strings.TrimSpace(buf.String()))
+	result.error = nil
+	return result
+}
+
+//export AddJSONToJSON
+func AddJSONToJSON(parentJson *C.char, key *C.char, childJson *C.char) C.JsonResult {
+	goParent := C.GoString(parentJson)
+	goKey := C.GoString(key)
+	goChild := C.GoString(childJson)
+	var result C.JsonResult
+
+	decoder := json.NewDecoder(bytes.NewReader([]byte(goParent)))
+	decoder.UseNumber()
+
+	var parentData map[string]interface{}
+	if err := decoder.Decode(&parentData); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	childDecoder := json.NewDecoder(bytes.NewReader([]byte(goChild)))
+	childDecoder.UseNumber()
+
+	var childData interface{}
+	if err := childDecoder.Decode(&childData); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	parentData[goKey] = childData
+
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(parentData); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	result.is_valid = 1
+	result.value = C.CString(strings.TrimSpace(buf.String()))
+	result.error = nil
+	return result
+}
+
+//export AddItemToArray
+func AddItemToArray(jsonArray *C.char, item *C.char) C.JsonResult {
+	goArray := C.GoString(jsonArray)
+	goItem := C.GoString(item)
+	var result C.JsonResult
+
+	decoder := json.NewDecoder(bytes.NewReader([]byte(goArray)))
+	decoder.UseNumber()
+
+	var arrayData []interface{}
+	if err := decoder.Decode(&arrayData); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	itemDecoder := json.NewDecoder(bytes.NewReader([]byte(goItem)))
+	itemDecoder.UseNumber()
+
+	var itemData interface{}
+	if err := itemDecoder.Decode(&itemData); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	arrayData = append(arrayData, itemData)
+
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(arrayData); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	result.is_valid = 1
+	result.value = C.CString(strings.TrimSpace(buf.String()))
+	result.error = nil
+	return result
+}
+
+//export RemoveKeyFromJSON
+func RemoveKeyFromJSON(jsonStr *C.char, key *C.char) C.JsonResult {
+	goJsonStr := C.GoString(jsonStr)
+	goKey := C.GoString(key)
+	var result C.JsonResult
+
+	decoder := json.NewDecoder(bytes.NewReader([]byte(goJsonStr)))
+	decoder.UseNumber()
+
+	var data map[string]interface{}
+	if err := decoder.Decode(&data); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	if _, exists := data[goKey]; !exists {
+		result.is_valid = 0
+		result.error = C.CString("key not found")
+		return result
+	}
+
+	delete(data, goKey)
+
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(data); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	result.is_valid = 1
+	result.value = C.CString(strings.TrimSpace(buf.String()))
+	result.error = nil
+	return result
+}
+
+//export RemoveItemFromArray
+func RemoveItemFromArray(jsonArray *C.char, index C.int) C.JsonResult {
+	goArray := C.GoString(jsonArray)
+	goIndex := int(index)
+	var result C.JsonResult
+
+	decoder := json.NewDecoder(bytes.NewReader([]byte(goArray)))
+	decoder.UseNumber()
+
+	var arrayData []interface{}
+	if err := decoder.Decode(&arrayData); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	if goIndex < 0 || goIndex >= len(arrayData) {
+		result.is_valid = 0
+		result.error = C.CString("index out of bounds")
+		return result
+	}
+
+	arrayData = append(arrayData[:goIndex], arrayData[goIndex+1:]...)
+
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(arrayData); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	result.is_valid = 1
+	result.value = C.CString(strings.TrimSpace(buf.String()))
+	result.error = nil
+	return result
+}
+
+//export PrettyPrintJSON
+func PrettyPrintJSON(jsonStr *C.char) C.JsonResult {
+	goJsonStr := C.GoString(jsonStr)
+	var result C.JsonResult
+
+	decoder := json.NewDecoder(bytes.NewReader([]byte(goJsonStr)))
+	decoder.UseNumber()
+
+	var data interface{}
+	if err := decoder.Decode(&data); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	jsonBytes, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	result.is_valid = 1
+	result.value = C.CString(string(jsonBytes))
+	result.error = nil
+	return result
+}
+
+//export MergeJSON
+func MergeJSON(json1 *C.char, json2 *C.char) C.JsonResult {
+	goJson1 := C.GoString(json1)
+	goJson2 := C.GoString(json2)
+	var result C.JsonResult
+
+	decoder1 := json.NewDecoder(bytes.NewReader([]byte(goJson1)))
+	decoder1.UseNumber()
+
+	var data1 map[string]interface{}
+	if err := decoder1.Decode(&data1); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	decoder2 := json.NewDecoder(bytes.NewReader([]byte(goJson2)))
+	decoder2.UseNumber()
+
+	var data2 map[string]interface{}
+	if err := decoder2.Decode(&data2); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	for key, value := range data2 {
+		data1[key] = value
+	}
+
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(data1); err != nil {
+		result.is_valid = 0
+		result.error = C.CString(err.Error())
+		return result
+	}
+
+	result.is_valid = 1
+	result.value = C.CString(strings.TrimSpace(buf.String()))
+	result.error = nil
+	return result
+}
+
+//export IsValidJSON
+func IsValidJSON(jsonStr *C.char) C.int {
+	goJsonStr := C.GoString(jsonStr)
+	
+	decoder := json.NewDecoder(bytes.NewReader([]byte(goJsonStr)))
+	decoder.UseNumber()
+	
+	var dummy interface{}
+	if err := decoder.Decode(&dummy); err != nil {
+		return 0
+	}
+	return 1
+}
 
 func main() {}
