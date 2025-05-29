@@ -220,10 +220,6 @@ int main() {
 ## Características
 
 - ✅ Analizar y validar cadenas JSON
-- 🔍 Extraer valores por clave o ruta JSON
-- 📦 Manejar arrays JSON (obtener longitud, acceder a elementos)
-- 🚀 Interfaz compatible con C para integración con otros lenguajes
-- 🧠 Operaciones seguras en memoria con limpieza adecuada
 - 📝 Manejo completo de errores
 
 
