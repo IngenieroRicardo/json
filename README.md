@@ -29,13 +29,13 @@ Compilada usando: `go build -o JSON.dll -buildmode=c-shared JSON.go`
 #include "JSON.h"
 
 int main() {
-    char* json = "{\"nombre\":\"Juan\", \"edad\":30, \"direccion\": {\"pais\":\"Villa Lactea\",\"departamento\":\"Tierra\"} }";
+    char* json = "{\"nombre\":\"Juan\", \"edad\":30, \"direccion\": {\"pais\":\"Villa Lactea\",\"departamento\":\"Tierra\"}, \"documentos\": [\"B00000001\",\"00000000-1\"] }";
     
     // Analizar JSON
     JsonResult resultado = ParseJSON(json);
     
     if (resultado.is_valid) {
-        printf("JSON válido: %s\n", resultado.value);
+        printf("JSON válido: %s\n", PrettyPrintJSON(resultado.value).value);
     } else {
         printf("Error: %s\n", resultado.error);
     }
@@ -43,15 +43,18 @@ int main() {
     // Obtener valores
     JsonResult nombre = GetJSONValue(json, "nombre");
     JsonResult pais = GetJSONValueByPath(json, "direccion.pais");
+    JsonResult documento1 = GetJSONValueByPath(json, "documentos.0");
     
     // Mostrar valores sin comillas
     printf("Nombre: %s\n", nombre.value);
     printf("País: %s\n", pais.value);
+    printf("Primer Documento: %s\n", documento1.value);
     
     // Liberar memoria
     FreeJsonResult(&resultado);
     FreeJsonResult(&nombre);
     FreeJsonResult(&pais);
+    FreeJsonResult(&documento1);
     
     return 0;
 }
