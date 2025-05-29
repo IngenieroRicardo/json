@@ -22,7 +22,7 @@ Compilada usando: `go build -o JSON.dll -buildmode=c-shared JSON.go`
 
 ---
 
-### 🧪 Ejemplo básico
+### 🧪 Ejemplo básico para leer JSON
 
 ```C
 #include <stdio.h>
@@ -72,7 +72,7 @@ int main() {
 
 
 
-### 🧪 Ejemplo avanzado 1
+### 🧪 Ejemplo avanzado 1 para leer JSON
 
 ```C
 #include <stdio.h>
@@ -152,7 +152,7 @@ int main() {
 
 ---
 
-### 🧪 Ejemplo avanzado 2
+### 🧪 Ejemplo avanzado 2 para leer JSON
 
 ```C
 #include <stdio.h>
@@ -245,6 +245,83 @@ int main() {
     }
     
     printf("\nProcesamiento completado\n");
+    return 0;
+}
+```
+
+
+---
+
+### 🧪 Ejemplo para escribir JSON
+
+```C
+#include <stdio.h>
+#include "JSON.h"
+
+int main() {
+    // 1. Crear un objeto JSON vacío
+    JsonResult empty_json = CreateEmptyJSON();
+    printf("JSON vacío: %s\n", empty_json.value);
+    FreeJsonResult(&empty_json);
+
+    // 2. Crear un objeto JSON con propiedades básicas
+    JsonResult person = CreateEmptyJSON();
+    person = AddStringToJSON(person.value, "name", "Juan Pérez");
+    person = AddNumberToJSON(person.value, "age", 30);
+    person = AddBooleanToJSON(person.value, "is_student", 0); // 0 = false
+    
+    printf("\nPersona básica:\n%s\n", person.value);
+
+    // 3. Crear una dirección como JSON y añadirla a la persona
+    JsonResult address = CreateEmptyJSON();
+    address = AddStringToJSON(address.value, "street", "Calle Principal 123");
+    address = AddStringToJSON(address.value, "city", "Ciudad Ejemplo");
+    address = AddStringToJSON(address.value, "country", "España");
+    
+    person = AddJSONToJSON(person.value, "address", address.value);
+    FreeJsonResult(&address);
+
+    // 4. Crear un array de hobbies y añadirlo
+    JsonResult hobbies = CreateEmptyArray();
+    hobbies = AddItemToArray(hobbies.value, "\"fútbol\"");
+    hobbies = AddItemToArray(hobbies.value, "\"lectura\"");
+    hobbies = AddItemToArray(hobbies.value, "\"programación\"");
+    
+    person = AddJSONToJSON(person.value, "hobbies", hobbies.value);
+    FreeJsonResult(&hobbies);
+
+    // 5. Formatear el JSON para mejor legibilidad
+    JsonResult pretty_person = PrettyPrintJSON(person.value);
+    printf("\nPersona con formato bonito:\n%s\n", pretty_person.value);
+    FreeJsonResult(&pretty_person);
+
+    // 6. Modificar el JSON existente
+    person = AddNumberToJSON(person.value, "age", 31); // Actualizar edad
+    person = AddStringToJSON(person.value, "email", "juan@example.com");
+    
+    printf("\nPersona actualizada:\n%s\n", person.value);
+
+    // 7. Eliminar una propiedad
+    person = RemoveKeyFromJSON(person.value, "is_student");
+    printf("\nPersona sin is_student:\n%s\n", person.value);
+
+    // 8. Crear otro JSON para combinar
+    JsonResult work_info = CreateEmptyJSON();
+    work_info = AddStringToJSON(work_info.value, "company", "Tech Solutions");
+    work_info = AddStringToJSON(work_info.value, "position", "Desarrollador");
+    
+    // Combinar con el JSON de persona
+    person = MergeJSON(person.value, work_info.value);
+    printf("\nPersona con info laboral:\n%s\n", person.value);
+    FreeJsonResult(&work_info);
+
+    // 9. Verificar si es JSON válido
+    int is_valid = IsValidJSON(person.value);
+    printf("\n¿JSON válido? %s\n", is_valid ? "Sí" : "No");
+
+    // Liberar memoria
+    FreeJsonResult(&person);
+
     return 0;
 }
 ```
