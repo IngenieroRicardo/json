@@ -42,7 +42,7 @@ int main() {
     
     // Obtener valores
     JsonResult nombre = GetJSONValue(json, "nombre");
-    JsonResult pais = GetJSONValue(GetJSONValue(json, "direccion").value, "pais");
+    JsonResult pais = GetJSONValueByPath(json, "direccion.pais");
     
     // Mostrar valores sin comillas
     printf("Nombre: %s\n", nombre.value);
