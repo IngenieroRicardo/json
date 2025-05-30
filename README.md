@@ -1,5 +1,5 @@
 # JSON
-Una biblioteca ligera para leer y procesar JSON en C.  
+Una biblioteca ligera para manipular JSON en C.  
 Compilada usando: `go build -o JSON.dll -buildmode=c-shared JSON.go`
 
 ---
