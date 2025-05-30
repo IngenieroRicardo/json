@@ -40,7 +40,7 @@ func ParseJSON(jsonStr *C.char) C.JsonResult {
 	var data interface{}
 	if err := decoder.Decode(&data); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al analizar JSON: " + err.Error())
 		return result
 	}
 
@@ -50,7 +50,7 @@ func ParseJSON(jsonStr *C.char) C.JsonResult {
 
 	if err := encoder.Encode(data); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al codificar JSON: " + err.Error())
 		return result
 	}
 
@@ -72,14 +72,14 @@ func GetJSONValue(jsonStr *C.char, key *C.char) C.JsonResult {
 	var data map[string]interface{}
 	if err := decoder.Decode(&data); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al analizar JSON: " + err.Error())
 		return result
 	}
 
 	value, exists := data[goKey]
 	if !exists {
 		result.is_valid = 0
-		result.error = C.CString("key not found")
+		result.error = C.CString(fmt.Sprintf("Clave '%s' no encontrada", goKey))
 		return result
 	}
 
@@ -109,7 +109,7 @@ func GetJSONValue(jsonStr *C.char, key *C.char) C.JsonResult {
 		encoder.SetEscapeHTML(false)
 		if err := encoder.Encode(value); err != nil {
 			result.is_valid = 0
-			result.error = C.CString(err.Error())
+			result.error = C.CString("Error al codificar valor: " + err.Error())
 			return result
 		}
 		result.is_valid = 1
@@ -126,7 +126,7 @@ func GetArrayLength(jsonStr *C.char) C.JsonResult {
 
 	if len(goStr) == 0 || goStr[0] != '[' {
 		result.is_valid = 0
-		result.error = C.CString("not a JSON array")
+		result.error = C.CString("No es un arreglo JSON válido")
 		return result
 	}
 
@@ -136,7 +136,7 @@ func GetArrayLength(jsonStr *C.char) C.JsonResult {
 	token, err := decoder.Token()
 	if err != nil || token != json.Delim('[') {
 		result.is_valid = 0
-		result.error = C.CString("invalid JSON array")
+		result.error = C.CString("Arreglo JSON inválido")
 		return result
 	}
 
@@ -145,7 +145,7 @@ func GetArrayLength(jsonStr *C.char) C.JsonResult {
 		var dummy interface{}
 		if err := decoder.Decode(&dummy); err != nil {
 			result.is_valid = 0
-			result.error = C.CString(err.Error())
+			result.error = C.CString("Error al contar elementos: " + err.Error())
 			return result
 		}
 		count++
@@ -168,7 +168,7 @@ func GetArrayItem(jsonStr *C.char, index int) C.JsonResult {
 	token, err := decoder.Token()
 	if err != nil || token != json.Delim('[') {
 		result.is_valid = 0
-		result.error = C.CString("invalid JSON array")
+		result.error = C.CString("Arreglo JSON inválido")
 		return result
 	}
 
@@ -178,7 +178,7 @@ func GetArrayItem(jsonStr *C.char, index int) C.JsonResult {
 			var item interface{}
 			if err := decoder.Decode(&item); err != nil {
 				result.is_valid = 0
-				result.error = C.CString(err.Error())
+				result.error = C.CString("Error al obtener elemento: " + err.Error())
 				return result
 			}
 
@@ -187,7 +187,7 @@ func GetArrayItem(jsonStr *C.char, index int) C.JsonResult {
 			encoder.SetEscapeHTML(false)
 			if err := encoder.Encode(item); err != nil {
 				result.is_valid = 0
-				result.error = C.CString(err.Error())
+				result.error = C.CString("Error al codificar elemento: " + err.Error())
 				return result
 			}
 
@@ -197,18 +197,18 @@ func GetArrayItem(jsonStr *C.char, index int) C.JsonResult {
 			return result
 		}
 
-		// Skip this item
+		// Saltar este elemento
 		var dummy interface{}
 		if err := decoder.Decode(&dummy); err != nil {
 			result.is_valid = 0
-			result.error = C.CString(err.Error())
+			result.error = C.CString("Error al saltar elemento: " + err.Error())
 			return result
 		}
 		currentIndex++
 	}
 
 	result.is_valid = 0
-	result.error = C.CString("index out of bounds")
+	result.error = C.CString("Índice fuera de rango")
 	return result
 }
 
@@ -233,7 +233,7 @@ func GetJSONKeys(jsonStr *C.char) C.JsonArrayResult {
 	var data map[string]interface{}
 	if err := decoder.Decode(&data); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al analizar JSON: " + err.Error())
 		return result
 	}
 
@@ -282,7 +282,7 @@ func GetJSONValueByPath(jsonStr *C.char, path *C.char) C.JsonResult {
 	var data interface{}
 	if err := decoder.Decode(&data); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al analizar JSON: " + err.Error())
 		return result
 	}
 
@@ -298,7 +298,7 @@ func GetJSONValueByPath(jsonStr *C.char, path *C.char) C.JsonResult {
 			val, exists := v[part]
 			if !exists {
 				result.is_valid = 0
-				result.error = C.CString(fmt.Sprintf("path '%s' not found", part))
+				result.error = C.CString(fmt.Sprintf("Ruta '%s' no encontrada", part))
 				return result
 			}
 			current = val
@@ -306,13 +306,13 @@ func GetJSONValueByPath(jsonStr *C.char, path *C.char) C.JsonResult {
 			index, err := strconv.Atoi(part)
 			if err != nil || index < 0 || index >= len(v) {
 				result.is_valid = 0
-				result.error = C.CString(fmt.Sprintf("invalid array index '%s'", part))
+				result.error = C.CString(fmt.Sprintf("Índice de arreglo inválido '%s'", part))
 				return result
 			}
 			current = v[index]
 		default:
 			result.is_valid = 0
-			result.error = C.CString(fmt.Sprintf("cannot traverse path '%s'", part))
+			result.error = C.CString(fmt.Sprintf("No se puede navegar por la ruta '%s'", part))
 			return result
 		}
 	}
@@ -348,7 +348,7 @@ func GetJSONValueByPath(jsonStr *C.char, path *C.char) C.JsonResult {
 		encoder.SetEscapeHTML(false)
 		if err := encoder.Encode(current); err != nil {
 			result.is_valid = 0
-			result.error = C.CString(err.Error())
+			result.error = C.CString("Error al codificar valor: " + err.Error())
 			return result
 		}
 		result.is_valid = 1
@@ -365,7 +365,7 @@ func GetArrayItems(jsonStr *C.char) C.JsonArrayResult {
 
 	if len(goStr) == 0 || goStr[0] != '[' {
 		result.is_valid = 0
-		result.error = C.CString("not a JSON array")
+		result.error = C.CString("No es un arreglo JSON válido")
 		return result
 	}
 
@@ -375,7 +375,7 @@ func GetArrayItems(jsonStr *C.char) C.JsonArrayResult {
 	token, err := decoder.Token()
 	if err != nil || token != json.Delim('[') {
 		result.is_valid = 0
-		result.error = C.CString("invalid JSON array")
+		result.error = C.CString("Arreglo JSON inválido")
 		return result
 	}
 
@@ -388,7 +388,7 @@ func GetArrayItems(jsonStr *C.char) C.JsonArrayResult {
 				C.free(unsafe.Pointer(C.CString(str)))
 			}
 			result.is_valid = 0
-			result.error = C.CString(err.Error())
+			result.error = C.CString("Error al obtener elementos: " + err.Error())
 			return result
 		}
 
@@ -400,7 +400,7 @@ func GetArrayItems(jsonStr *C.char) C.JsonArrayResult {
 				C.free(unsafe.Pointer(C.CString(str)))
 			}
 			result.is_valid = 0
-			result.error = C.CString(err.Error())
+			result.error = C.CString("Error al codificar elemento: " + err.Error())
 			return result
 		}
 
@@ -454,7 +454,7 @@ func AddStringToJSON(jsonStr *C.char, key *C.char, value *C.char) C.JsonResult {
 	var data map[string]interface{}
 	if err := decoder.Decode(&data); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al analizar JSON: " + err.Error())
 		return result
 	}
 
@@ -465,7 +465,7 @@ func AddStringToJSON(jsonStr *C.char, key *C.char, value *C.char) C.JsonResult {
 	encoder.SetEscapeHTML(false)
 	if err := encoder.Encode(data); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al codificar JSON: " + err.Error())
 		return result
 	}
 
@@ -487,7 +487,7 @@ func AddNumberToJSON(jsonStr *C.char, key *C.char, value float64) C.JsonResult {
 	var data map[string]interface{}
 	if err := decoder.Decode(&data); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al analizar JSON: " + err.Error())
 		return result
 	}
 
@@ -498,7 +498,7 @@ func AddNumberToJSON(jsonStr *C.char, key *C.char, value float64) C.JsonResult {
 	encoder.SetEscapeHTML(false)
 	if err := encoder.Encode(data); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al codificar JSON: " + err.Error())
 		return result
 	}
 
@@ -521,7 +521,7 @@ func AddBooleanToJSON(jsonStr *C.char, key *C.char, value C.int) C.JsonResult {
 	var data map[string]interface{}
 	if err := decoder.Decode(&data); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al analizar JSON: " + err.Error())
 		return result
 	}
 
@@ -532,7 +532,7 @@ func AddBooleanToJSON(jsonStr *C.char, key *C.char, value C.int) C.JsonResult {
 	encoder.SetEscapeHTML(false)
 	if err := encoder.Encode(data); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al codificar JSON: " + err.Error())
 		return result
 	}
 
@@ -555,7 +555,7 @@ func AddJSONToJSON(parentJson *C.char, key *C.char, childJson *C.char) C.JsonRes
 	var parentData map[string]interface{}
 	if err := decoder.Decode(&parentData); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al analizar JSON padre: " + err.Error())
 		return result
 	}
 
@@ -565,7 +565,7 @@ func AddJSONToJSON(parentJson *C.char, key *C.char, childJson *C.char) C.JsonRes
 	var childData interface{}
 	if err := childDecoder.Decode(&childData); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al analizar JSON hijo: " + err.Error())
 		return result
 	}
 
@@ -576,7 +576,7 @@ func AddJSONToJSON(parentJson *C.char, key *C.char, childJson *C.char) C.JsonRes
 	encoder.SetEscapeHTML(false)
 	if err := encoder.Encode(parentData); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al codificar JSON combinado: " + err.Error())
 		return result
 	}
 
@@ -598,7 +598,7 @@ func AddItemToArray(jsonArray *C.char, item *C.char) C.JsonResult {
 	var arrayData []interface{}
 	if err := decoder.Decode(&arrayData); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al analizar arreglo JSON: " + err.Error())
 		return result
 	}
 
@@ -608,7 +608,7 @@ func AddItemToArray(jsonArray *C.char, item *C.char) C.JsonResult {
 	var itemData interface{}
 	if err := itemDecoder.Decode(&itemData); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al analizar elemento: " + err.Error())
 		return result
 	}
 
@@ -619,7 +619,7 @@ func AddItemToArray(jsonArray *C.char, item *C.char) C.JsonResult {
 	encoder.SetEscapeHTML(false)
 	if err := encoder.Encode(arrayData); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al codificar arreglo actualizado: " + err.Error())
 		return result
 	}
 
@@ -641,13 +641,13 @@ func RemoveKeyFromJSON(jsonStr *C.char, key *C.char) C.JsonResult {
 	var data map[string]interface{}
 	if err := decoder.Decode(&data); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al analizar JSON: " + err.Error())
 		return result
 	}
 
 	if _, exists := data[goKey]; !exists {
 		result.is_valid = 0
-		result.error = C.CString("key not found")
+		result.error = C.CString(fmt.Sprintf("Clave '%s' no encontrada", goKey))
 		return result
 	}
 
@@ -658,7 +658,7 @@ func RemoveKeyFromJSON(jsonStr *C.char, key *C.char) C.JsonResult {
 	encoder.SetEscapeHTML(false)
 	if err := encoder.Encode(data); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al codificar JSON actualizado: " + err.Error())
 		return result
 	}
 
@@ -680,13 +680,13 @@ func RemoveItemFromArray(jsonArray *C.char, index C.int) C.JsonResult {
 	var arrayData []interface{}
 	if err := decoder.Decode(&arrayData); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al analizar arreglo JSON: " + err.Error())
 		return result
 	}
 
 	if goIndex < 0 || goIndex >= len(arrayData) {
 		result.is_valid = 0
-		result.error = C.CString("index out of bounds")
+		result.error = C.CString("Índice fuera de rango")
 		return result
 	}
 
@@ -697,7 +697,7 @@ func RemoveItemFromArray(jsonArray *C.char, index C.int) C.JsonResult {
 	encoder.SetEscapeHTML(false)
 	if err := encoder.Encode(arrayData); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al codificar arreglo actualizado: " + err.Error())
 		return result
 	}
 
@@ -718,14 +718,14 @@ func PrettyPrintJSON(jsonStr *C.char) C.JsonResult {
 	var data interface{}
 	if err := decoder.Decode(&data); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al analizar JSON: " + err.Error())
 		return result
 	}
 
 	jsonBytes, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al formatear JSON: " + err.Error())
 		return result
 	}
 
@@ -747,7 +747,7 @@ func MergeJSON(json1 *C.char, json2 *C.char) C.JsonResult {
 	var data1 map[string]interface{}
 	if err := decoder1.Decode(&data1); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al analizar primer JSON: " + err.Error())
 		return result
 	}
 
@@ -757,7 +757,7 @@ func MergeJSON(json1 *C.char, json2 *C.char) C.JsonResult {
 	var data2 map[string]interface{}
 	if err := decoder2.Decode(&data2); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al analizar segundo JSON: " + err.Error())
 		return result
 	}
 
@@ -770,7 +770,7 @@ func MergeJSON(json1 *C.char, json2 *C.char) C.JsonResult {
 	encoder.SetEscapeHTML(false)
 	if err := encoder.Encode(data1); err != nil {
 		result.is_valid = 0
-		result.error = C.CString(err.Error())
+		result.error = C.CString("Error al codificar JSON combinado: " + err.Error())
 		return result
 	}
 
