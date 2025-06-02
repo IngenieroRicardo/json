@@ -213,13 +213,13 @@ func GetArrayItem(jsonStr *C.char, index int) C.JsonResult {
 }
 
 //export FreeJsonResult
-func FreeJsonResult(result *C.JsonResult) {
-	if result.value != nil {
-		C.free(unsafe.Pointer(result.value))
-	}
-	if result.error != nil {
-		C.free(unsafe.Pointer(result.error))
-	}
+func FreeJsonResult(result C.JsonResult) {
+    if result.value != nil {
+        C.free(unsafe.Pointer(result.value))
+    }
+    if result.error != nil {
+        C.free(unsafe.Pointer(result.error))
+    }
 }
 
 //export GetJSONKeys
@@ -257,17 +257,17 @@ func GetJSONKeys(jsonStr *C.char) C.JsonArrayResult {
 }
 
 //export FreeJsonArrayResult
-func FreeJsonArrayResult(result *C.JsonArrayResult) {
-	if result.items != nil {
-		cKeys := (*[1<<30]*C.char)(unsafe.Pointer(result.items))[:result.count:result.count]
-		for i := 0; i < int(result.count); i++ {
-			C.free(unsafe.Pointer(cKeys[i]))
-		}
-		C.free(unsafe.Pointer(result.items))
-	}
-	if result.error != nil {
-		C.free(unsafe.Pointer(result.error))
-	}
+func FreeJsonArrayResult(result C.JsonArrayResult) { // Recibe por valor
+    if result.items != nil {
+        cItems := (*[1<<30]*C.char)(unsafe.Pointer(result.items))[:result.count:result.count]
+        for i := 0; i < int(result.count); i++ {
+            C.free(unsafe.Pointer(cItems[i]))
+        }
+        C.free(unsafe.Pointer(result.items))
+    }
+    if result.error != nil {
+        C.free(unsafe.Pointer(result.error))
+    }
 }
 
 //export GetJSONValueByPath

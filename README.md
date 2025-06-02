@@ -51,10 +51,10 @@ int main() {
     printf("Primer Documento: %s\n", documento1.value);
     
     // Liberar memoria
-    FreeJsonResult(&resultado);
-    FreeJsonResult(&nombre);
-    FreeJsonResult(&pais);
-    FreeJsonResult(&documento1);
+    FreeJsonResult(resultado);
+    FreeJsonResult(nombre);
+    FreeJsonResult(pais);
+    FreeJsonResult(documento1);
     
     return 0;
 }
@@ -72,7 +72,7 @@ int main() {
     // 1. Crear un objeto JSON vacío
     JsonResult json_vacio = CreateEmptyJSON();
     printf("JSON vacío: %s\n", json_vacio.value);
-    FreeJsonResult(&json_vacio);
+    FreeJsonResult(json_vacio);
 
     // 2. Crear un objeto JSON con datos básicos de persona
     JsonResult persona = CreateEmptyJSON();
@@ -89,7 +89,7 @@ int main() {
     direccion = AddStringToJSON(direccion.value, "pais", "España");
     
     persona = AddJSONToJSON(persona.value, "direccion", direccion.value);
-    FreeJsonResult(&direccion);
+    FreeJsonResult(direccion);
 
     // 4. Crear un array de pasatiempos y añadirlo
     JsonResult pasatiempos = CreateEmptyArray();
@@ -98,12 +98,12 @@ int main() {
     pasatiempos = AddItemToArray(pasatiempos.value, "\"programación\"");
     
     persona = AddJSONToJSON(persona.value, "pasatiempos", pasatiempos.value);
-    FreeJsonResult(&pasatiempos);
+    FreeJsonResult(pasatiempos);
 
     // 5. Formatear el JSON para mejor legibilidad
     JsonResult persona_formateada = PrettyPrintJSON(persona.value);
     printf("\nPersona con formato legible:\n%s\n", persona_formateada.value);
-    FreeJsonResult(&persona_formateada);
+    FreeJsonResult(persona_formateada);
 
     // 6. Modificar el JSON existente
     persona = AddNumberToJSON(persona.value, "edad", 31); // Actualizar edad
@@ -123,14 +123,14 @@ int main() {
     // Combinar con el JSON de persona
     persona = MergeJSON(persona.value, info_laboral.value);
     printf("\nPersona con información laboral:\n%s\n", persona.value);
-    FreeJsonResult(&info_laboral);
+    FreeJsonResult(info_laboral);
 
     // 9. Verificar si el JSON es válido
     int es_valido = IsValidJSON(persona.value);
     printf("\n¿JSON válido? %s\n", es_valido ? "Sí" : "No");
 
     // Liberar memoria
-    FreeJsonResult(&persona);
+    FreeJsonResult(persona);
 
     return 0;
 }
@@ -165,22 +165,22 @@ int main() {
     printf("\nTest de parsing: ");
     if (!parse_test.is_valid) {
         printf("Error: %s\n", parse_test.error);
-        FreeJsonResult(&parse_test);
+        FreeJsonResult(parse_test);
         return 1;
     }
     printf("JSON válido\n");
-    FreeJsonResult(&parse_test);
+    FreeJsonResult(parse_test);
 
     // 2. Obtener longitud del array
     JsonResult length_result = GetArrayLength(json_data);
     printf("\nLongitud del array: ");
     if (!length_result.is_valid) {
         printf("Error: %s\n", length_result.error);
-        FreeJsonResult(&length_result);
+        FreeJsonResult(length_result);
         return 1;
     } 
     int array_length = atoi(length_result.value);
-    FreeJsonResult(&length_result);
+    FreeJsonResult(length_result);
     printf("El array contiene %d elemento(s)\n", array_length);
 
     // 3. Procesar cada elemento si la longitud es correcta
@@ -191,7 +191,7 @@ int main() {
             JsonResult item_result = GetArrayItem(json_data, i);
             if (!item_result.is_valid) {
                 printf("Error al obtener elemento: %s\n", item_result.error);
-                FreeJsonResult(&item_result);
+                FreeJsonResult(item_result);
                 continue;
             }
             
@@ -204,9 +204,9 @@ int main() {
             printf("  Tipo documento: %s\n", documento.value);
             printf("  Número: %s\n", numero.value);
                         
-            FreeJsonResult(&documento);
-            FreeJsonResult(&numero);
-            FreeJsonResult(&item_result);
+            FreeJsonResult(documento);
+            FreeJsonResult(numero);
+            FreeJsonResult(item_result);
         }
     } else {
         printf("\nError: El array está vacío o no se pudo determinar su longitud\n");
@@ -249,8 +249,8 @@ int main() {
 
 #### Utilidades
 - `JsonResult PrettyPrintJSON(const char* json_str)`: Formatea JSON con indentación
-- `void FreeJsonResult(JsonResult* result)`: Libera memoria de resultados
-- `void FreeJsonArrayResult(JsonArrayResult* result)`: Libera memoria de arrays
+- `void FreeJsonResult(JsonResult result)`: Libera memoria de resultados
+- `void FreeJsonArrayResult(JsonArrayResult result)`: Libera memoria de arrays
 
 ### Estructuras
 ```c
