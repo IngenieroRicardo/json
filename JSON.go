@@ -27,8 +27,6 @@ import (
 	"bytes"
 )
 
-// ------------------------- Funciones Optimizadas -------------------------
-
 //export ParseJSON
 func ParseJSON(jsonStr *C.char) C.JsonResult {
 	goStr := C.GoString(jsonStr)
@@ -420,8 +418,6 @@ func GetArrayItems(jsonStr *C.char) C.JsonArrayResult {
 	result.error = nil
 	return result
 }
-
-// ------------------------- Funciones de Construcción Optimizadas -------------------------
 
 //export CreateEmptyJSON
 func CreateEmptyJSON() C.JsonResult {
