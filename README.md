@@ -220,7 +220,7 @@ int main() {
 ---
 
 
-```markdown
+
 ## 📚 Documentación de la API
 
 ### Funciones Principales
@@ -266,4 +266,4 @@ typedef struct {
     int is_valid;     // 1 si es válido, 0 si hay error
     char* error;      // Mensaje de error (si lo hay)
 } JsonArrayResult;
----
+```
