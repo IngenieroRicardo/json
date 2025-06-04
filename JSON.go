@@ -703,34 +703,6 @@ func RemoveItemFromArray(jsonArray *C.char, index C.int) C.JsonResult {
 	return result
 }
 
-//export PrettyPrintJSON
-func PrettyPrintJSON(jsonStr *C.char) C.JsonResult {
-	goJsonStr := C.GoString(jsonStr)
-	var result C.JsonResult
-
-	decoder := json.NewDecoder(bytes.NewReader([]byte(goJsonStr)))
-	decoder.UseNumber()
-
-	var data interface{}
-	if err := decoder.Decode(&data); err != nil {
-		result.is_valid = 0
-		result.error = C.CString("Error al analizar JSON: " + err.Error())
-		return result
-	}
-
-	jsonBytes, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		result.is_valid = 0
-		result.error = C.CString("Error al formatear JSON: " + err.Error())
-		return result
-	}
-
-	result.is_valid = 1
-	result.value = C.CString(string(jsonBytes))
-	result.error = nil
-	return result
-}
-
 //export MergeJSON
 func MergeJSON(json1 *C.char, json2 *C.char) C.JsonResult {
 	goJson1 := C.GoString(json1)
