@@ -112,7 +112,6 @@ extern __declspec(dllexport) JsonResult AddJSONToJSON(char* parentJson, char* ke
 extern __declspec(dllexport) JsonResult AddItemToArray(char* jsonArray, char* item);
 extern __declspec(dllexport) JsonResult RemoveKeyFromJSON(char* jsonStr, char* key);
 extern __declspec(dllexport) JsonResult RemoveItemFromArray(char* jsonArray, int index);
-extern __declspec(dllexport) JsonResult PrettyPrintJSON(char* jsonStr);
 extern __declspec(dllexport) JsonResult MergeJSON(char* json1, char* json2);
 extern __declspec(dllexport) int IsValidJSON(char* jsonStr);
 #else 
@@ -134,7 +133,6 @@ extern JsonResult AddJSONToJSON(char* parentJson, char* key, char* childJson);
 extern JsonResult AddItemToArray(char* jsonArray, char* item);
 extern JsonResult RemoveKeyFromJSON(char* jsonStr, char* key);
 extern JsonResult RemoveItemFromArray(char* jsonArray, int index);
-extern JsonResult PrettyPrintJSON(char* jsonStr);
 extern JsonResult MergeJSON(char* json1, char* json2);
 extern int IsValidJSON(char* jsonStr);
 #endif
