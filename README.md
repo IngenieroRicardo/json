@@ -35,7 +35,7 @@ int main() {
     JsonResult resultado = ParseJSON(json);
     
     if (resultado.is_valid) {
-        printf("JSON válido: %s\n", PrettyPrintJSON(resultado.value).value);
+        printf("JSON válido: %s\n", resultado.value);
     } else {
         printf("Error: %s\n", resultado.error);
     }
@@ -101,7 +101,7 @@ int main() {
     FreeJsonResult(pasatiempos);
 
     // 5. Formatear el JSON para mejor legibilidad
-    JsonResult persona_formateada = PrettyPrintJSON(persona.value);
+    JsonResult persona_formateada = persona.value;
     printf("\nPersona con formato legible:\n%s\n", persona_formateada.value);
     FreeJsonResult(persona_formateada);
 
@@ -248,7 +248,6 @@ int main() {
 - `JsonResult MergeJSON(const char* json1, const char* json2)`: Combina dos JSONs
 
 #### Utilidades
-- `JsonResult PrettyPrintJSON(const char* json_str)`: Formatea JSON con indentación
 - `void FreeJsonResult(JsonResult result)`: Libera memoria de resultados
 - `void FreeJsonArrayResult(JsonArrayResult result)`: Libera memoria de arrays
 
