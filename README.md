@@ -38,6 +38,8 @@ int main() {
         printf("JSON válido: %s\n", resultado.value);
     } else {
         printf("Error: %s\n", resultado.error);
+        FreeJsonResult(resultado);
+        return 1;
     }
     
     // Obtener valores
