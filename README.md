@@ -100,22 +100,17 @@ int main() {
     persona = AddJSONToJSON(persona.value, "pasatiempos", pasatiempos.value);
     FreeJsonResult(pasatiempos);
 
-    // 5. Formatear el JSON para mejor legibilidad
-    JsonResult persona_formateada = persona.value;
-    printf("\nPersona con formato legible:\n%s\n", persona_formateada.value);
-    FreeJsonResult(persona_formateada);
-
-    // 6. Modificar el JSON existente
+    // 5. Modificar el JSON existente
     persona = AddNumberToJSON(persona.value, "edad", 31); // Actualizar edad
     persona = AddStringToJSON(persona.value, "correo", "juan@ejemplo.com");
     
     printf("\nPersona actualizada:\n%s\n", persona.value);
 
-    // 7. Eliminar una propiedad
+    // 6. Eliminar una propiedad
     persona = RemoveKeyFromJSON(persona.value, "es_estudiante");
     printf("\nPersona sin 'es_estudiante':\n%s\n", persona.value);
 
-    // 8. Crear otro JSON con información laboral
+    // 7. Crear otro JSON con información laboral
     JsonResult info_laboral = CreateEmptyJSON();
     info_laboral = AddStringToJSON(info_laboral.value, "empresa", "Soluciones Tecnológicas");
     info_laboral = AddStringToJSON(info_laboral.value, "puesto", "Desarrollador");
@@ -125,7 +120,7 @@ int main() {
     printf("\nPersona con información laboral:\n%s\n", persona.value);
     FreeJsonResult(info_laboral);
 
-    // 9. Verificar si el JSON es válido
+    // 8. Verificar si el JSON es válido
     int es_valido = IsValidJSON(persona.value);
     printf("\n¿JSON válido? %s\n", es_valido ? "Sí" : "No");
 
