@@ -223,26 +223,26 @@ int main() {
 ### Funciones Principales
 
 #### Manejo Básico de JSON
-- `JsonResult ParseJSON(const char* json_str)`: Analiza una cadena JSON
-- `int IsValidJSON(const char* json_str)`: Verifica si una cadena es JSON válido
+- `JsonResult ParseJSON(char* jsonStr)`: Analiza una cadena JSON
+- `int IsValidJSON(char* json_str)`: Verifica si una cadena es JSON válido
 
 #### Obtención de Valores
-- `JsonResult GetJSONValue(const char* json_str, const char* key)`: Obtiene valor por clave
-- `JsonResult GetJSONValueByPath(const char* json_str, const char* path)`: Obtiene valor por ruta
-- `JsonResult GetArrayLength(const char* json_str)`: Obtiene longitud de array
-- `JsonResult GetArrayItem(const char* json_str, int index)`: Obtiene elemento de array
+- `JsonResult GetJSONValue(char* json_str, char* key)`: Obtiene valor por clave
+- `JsonResult GetJSONValueByPath(char* json_str, char* path)`: Obtiene valor por ruta
+- `JsonResult GetArrayLength(char* json_str)`: Obtiene longitud de array
+- `JsonResult GetArrayItem(char* json_str, int index)`: Obtiene elemento de array
 
 #### Construcción/Modificación
 - `JsonResult CreateEmptyJSON()`: Crea objeto JSON vacío
 - `JsonResult CreateEmptyArray()`: Crea array JSON vacío
-- `JsonResult AddStringToJSON(const char* json_str, const char* key, const char* value)`
-- `JsonResult AddNumberToJSON(const char* json_str, const char* key, double value)`
-- `JsonResult AddBooleanToJSON(const char* json_str, const char* key, int value)`
-- `JsonResult AddJSONToJSON(const char* parent_json, const char* key, const char* child_json)`
-- `JsonResult AddItemToArray(const char* json_array, const char* item)`
-- `JsonResult RemoveKeyFromJSON(const char* json_str, const char* key)`
-- `JsonResult RemoveItemFromArray(const char* json_array, int index)`
-- `JsonResult MergeJSON(const char* json1, const char* json2)`: Combina dos JSONs
+- `JsonResult AddStringToJSON(char* json_str, char* key, char* value)`
+- `JsonResult AddNumberToJSON(char* json_str, char* key, double value)`
+- `JsonResult AddBooleanToJSON(char* json_str, char* key, int value)`
+- `JsonResult AddJSONToJSON(char* parent_json, char* key, char* child_json)`
+- `JsonResult AddItemToArray(char* json_array, char* item)`
+- `JsonResult RemoveKeyFromJSON(char* json_str, char* key)`
+- `JsonResult RemoveItemFromArray(char* json_array, int index)`
+- `JsonResult MergeJSON(char* json1, char* json2)`: Combina dos JSONs
 
 #### Utilidades
 - `void FreeJsonResult(JsonResult result)`: Libera memoria de resultados
