@@ -1,6 +1,6 @@
 # JSON
 Una biblioteca ligera para manipular JSON en C.  
-Compilada usando: `go build -o JSON.dll -buildmode=c-shared JSON.go`
+Compilada usando: `go build -o json.dll -buildmode=c-shared json.go`
 
 ---
 
@@ -8,8 +8,8 @@ Compilada usando: `go build -o JSON.dll -buildmode=c-shared JSON.go`
 
 | Linux | Windows |
 | --- | --- |
-| `wget https://github.com/IngenieroRicardo/JSON/releases/download/1.0/JSON.so` | `Invoke-WebRequest https://github.com/IngenieroRicardo/JSON/releases/download/1.0/JSON.dll -OutFile ./JSON.dll` |
-| `wget https://github.com/IngenieroRicardo/JSON/releases/download/1.0/JSON.h` | `Invoke-WebRequest https://github.com/IngenieroRicardo/JSON/releases/download/1.0/JSON.h -OutFile ./JSON.h` |
+| `wget https://github.com/IngenieroRicardo/JSON/releases/download/1.0/json.so` | `Invoke-WebRequest https://github.com/IngenieroRicardo/JSON/releases/download/1.0/json.dll -OutFile ./json.dll` |
+| `wget https://github.com/IngenieroRicardo/JSON/releases/download/1.0/json.h` | `Invoke-WebRequest https://github.com/IngenieroRicardo/JSON/releases/download/1.0/json.h -OutFile ./json.h` |
 
 ---
 
@@ -17,16 +17,16 @@ Compilada usando: `go build -o JSON.dll -buildmode=c-shared JSON.go`
 
 | Linux | Windows |
 | --- | --- |
-| `gcc -o main.bin main.c ./JSON.so` | `gcc -o main.exe main.c ./JSON.dll` |
-| `x86_64-w64-mingw32-gcc -o main.exe main.c ./JSON.dll` |  |
+| `gcc -o main.bin main.c ./json.so` | `gcc -o main.exe main.c ./json.dll` |
+| `x86_64-w64-mingw32-gcc -o main.exe main.c ./json.dll` |  |
 
 ---
 
-### 🧪 Ejemplo básico para leer JSON
+### 🧪 Ejemplo para leer JSON
 
 ```C
 #include <stdio.h>
-#include "JSON.h"
+#include "json.h"
 
 int main() {
     char* json = "{\"nombre\":\"Juan\", \"edad\":30, \"direccion\": {\"pais\":\"Villa Lactea\",\"departamento\":\"Tierra\"}, \"documentos\": [\"B00000001\",\"00000000-1\"], \"foto\":\"iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAArSURBVBhXY/iPA0AlGBgwGFAKlwQmAKrAIgcVRZODCsI5cAAVgVDo4P9/AHe4m2U/OJCWAAAAAElFTkSuQmCC\" }";
@@ -68,7 +68,7 @@ int main() {
 
 ```C
 #include <stdio.h>
-#include "JSON.h"
+#include "json.h"
 
 int main() {
     // 1. Crear un objeto JSON vacío
@@ -135,92 +135,8 @@ int main() {
 
 ---
 
-### 🧪 Ejemplo avanzado para leer JSON
-
-```C
-#include <stdio.h>
-#include "JSON.h"
-
-int main() {
-    /* Ejemplo de JSON para pruebas:
-    [
-        { 
-            "documento": "pasaporte",
-            "numero": "B00000001"
-        },
-        {
-            "documento": "pasaporte",
-            "numero": "B00000002"
-        }
-    ]
-    */
-    char* json_data = "[{\"documento\":\"pasaporte\",\"numero\":\"B00000001\"},{\"documento\":\"pasaporte\",\"numero\":\"B00000002\"}]";
-    printf("Procesando JSON completo:\n%s\n", json_data);
-
-    // 1. Verificar parsing básico
-    JsonResult parse_test = ParseJSON(json_data);
-    printf("\nTest de parsing: ");
-    if (!parse_test.is_valid) {
-        printf("Error: %s\n", parse_test.error);
-        FreeJsonResult(parse_test);
-        return 1;
-    }
-    printf("JSON válido\n");
-    FreeJsonResult(parse_test);
-
-    // 2. Obtener longitud del array
-    JsonResult length_result = GetArrayLength(json_data);
-    printf("\nLongitud del array: ");
-    if (!length_result.is_valid) {
-        printf("Error: %s\n", length_result.error);
-        FreeJsonResult(length_result);
-        return 1;
-    } 
-    int array_length = atoi(length_result.value);
-    FreeJsonResult(length_result);
-    printf("El array contiene %d elemento(s)\n", array_length);
-
-    // 3. Procesar cada elemento si la longitud es correcta
-    if (array_length > 0) {
-        for (int i = 0; i < array_length; i++) {
-            printf("\nElemento %d:\n", i+1);
-            
-            JsonResult item_result = GetArrayItem(json_data, i);
-            if (!item_result.is_valid) {
-                printf("Error al obtener elemento: %s\n", item_result.error);
-                FreeJsonResult(item_result);
-                continue;
-            }
-            
-            printf("Contenido JSON: %s\n", item_result.value);
-            
-            // Extraer valores específicos
-            JsonResult documento = GetJSONValue(item_result.value, "documento");
-            JsonResult numero = GetJSONValue(item_result.value, "numero");
-            
-            printf("  Tipo documento: %s\n", documento.value);
-            printf("  Número: %s\n", numero.value);
-                        
-            FreeJsonResult(documento);
-            FreeJsonResult(numero);
-            FreeJsonResult(item_result);
-        }
-    } else {
-        printf("\nError: El array está vacío o no se pudo determinar su longitud\n");
-    }
-    
-    printf("\nProcesamiento completado\n");
-    return 0;
-}
-```
-
----
-
-
 
 ## 📚 Documentación de la API
-
-### Funciones Principales
 
 #### Manejo Básico de JSON
 - `JsonResult ParseJSON(char* jsonStr)`: Analiza una cadena JSON
