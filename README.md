@@ -8,8 +8,8 @@ Compilada usando: `go build -o json.dll -buildmode=c-shared json.go`
 
 | Linux | Windows |
 | --- | --- |
-| `wget https://github.com/IngenieroRicardo/JSON/releases/download/1.0/json.so` | `Invoke-WebRequest https://github.com/IngenieroRicardo/JSON/releases/download/1.0/json.dll -OutFile ./json.dll` |
-| `wget https://github.com/IngenieroRicardo/JSON/releases/download/1.0/json.h` | `Invoke-WebRequest https://github.com/IngenieroRicardo/JSON/releases/download/1.0/json.h -OutFile ./json.h` |
+| `wget https://github.com/IngenieroRicardo/json/releases/download/1.0/json.so` | `Invoke-WebRequest https://github.com/IngenieroRicardo/json/releases/download/1.0/json.dll -OutFile ./json.dll` |
+| `wget https://github.com/IngenieroRicardo/json/releases/download/1.0/json.h` | `Invoke-WebRequest https://github.com/IngenieroRicardo/json/releases/download/1.0/json.h -OutFile ./json.h` |
 
 ---
 
