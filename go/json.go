@@ -330,14 +330,14 @@ func GetArrayItems(jsonStr string) JsonArrayResult {
 
 func CreateEmptyJSON() JsonResult {
 	return JsonResult{
-		IsValid: true,
+		Is_Valid: true,
 		Value:   "{}",
 	}
 }
 
 func CreateEmptyArray() JsonResult {
 	return JsonResult{
-		IsValid: true,
+		Is_Valid: true,
 		Value:   "[]",
 	}
 }
